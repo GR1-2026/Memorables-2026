@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Memorables 2026 🧡</title>
-    <!-- 适配GitHub Pages路径，避免资源加载问题 -->
     <base href="./">
     <style>
         :root {
@@ -39,7 +38,6 @@
             line-height: 1.65;
         }
 
-        /* 欢迎信弹窗 */
         .letter-box {
             position: fixed;
             top: 0;
@@ -110,7 +108,6 @@
             opacity: 0.8;
         }
 
-        /* 导航栏 */
         .nav-bar {
             display: flex;
             justify-content: space-between;
@@ -145,7 +142,6 @@
             color: var(--primary);
         }
 
-        /* 管理员面板 */
         .admin-panel {
             background: var(--bg-card);
             border-radius: var(--border-radius);
@@ -241,7 +237,6 @@
             transform: translateY(-2px);
         }
 
-        /* 礼物列表（一行两列，GitHub Pages适配） */
         .gift-list {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -304,7 +299,6 @@
             line-height: 1.7;
         }
 
-        /* 新增：申领人昵称展示 */
         .claimer-list {
             font-size: 14px;
             color: var(--primary);
@@ -341,7 +335,6 @@
             background: rgba(120, 120, 120, 0.05);
         }
 
-        /* 申领弹窗（填写昵称） */
         .claim-modal {
             position: fixed;
             top: 0;
@@ -378,332 +371,3 @@
         }
 
         .nickname-input {
-            margin-bottom: var(--spacing-md);
-        }
-
-        /* 提示框 */
-        .tip-box {
-            position: fixed;
-            bottom: var(--spacing-md);
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--primary);
-            color: white;
-            padding: 12px 24px;
-            border-radius: var(--border-radius);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            z-index: 99;
-            font-size: 14px;
-            box-shadow: var(--shadow);
-        }
-
-        .tip-box.show {
-            opacity: 1;
-        }
-
-        /* 手机端适配 */
-        @media (max-width: 768px) {
-            .gift-list {
-                grid-template-columns: 1fr;
-                gap: var(--spacing-sm);
-            }
-
-            .letter-card {
-                padding: var(--spacing-md);
-            }
-
-            .nav-bar {
-                margin: var(--spacing-sm) 0;
-            }
-
-            .gift-img {
-                height: 180px;
-            }
-
-            .gift-info {
-                padding: var(--spacing-sm);
-            }
-
-            .gift-desc {
-                font-size: 15px;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- 欢迎信弹窗 -->
-    <div class="letter-box" id="letterBox">
-        <div class="letter-card">
-            <button class="letter-close" id="letterClose">×</button>
-            <h2 class="letter-title">致我亲爱的朋友们</h2>
-            <p class="letter-content" id="letterContent">
-                当我准备踏上新的旅程，想把这些承载着我们共同回忆的小物件分享给你。每一件物品都藏着一段时光、一次欢笑，或是一个让我们的日子更温暖的瞬间。<br><br>
-                这不是告别，只是想让我们的回忆一直相伴，即便我们走向不同的方向。谢谢你带来的快乐、支持，还有那些难忘的瞬间。心怀感恩，始终。
-            </p>
-            <p class="letter-sign">你的朋友 [我的名字]</p>
-        </div>
-    </div>
-
-    <!-- 导航栏 -->
-    <div class="nav-bar">
-        <h1 class="nav-title">Memorables 2026 🧡</h1>
-        <div class="admin-icon" id="adminIcon">⚙️</div>
-    </div>
-
-    <!-- 管理员面板 -->
-    <div class="admin-panel" id="adminPanel">
-        <div class="form-item">
-            <label class="form-title">✍️ 编辑欢迎信</label>
-            <textarea id="letterEdit" rows="6"></textarea>
-            <button class="btn" id="saveLetter">保存信件</button>
-        </div>
-        <div class="form-item">
-            <label class="form-title">📸 添加记忆物品</label>
-            <div class="upload-box" id="uploadBox">拖拽图片到此处，或点击添加</div>
-            <input type="file" id="fileInput" accept="image/*" style="display: none;">
-            <img class="preview-img" id="previewImg">
-            <input type="text" id="giftName" placeholder="请输入物品名称（如：一起喝过的咖啡杯）">
-            <input type="number" id="giftStock" min="1" max="99" value="1" placeholder="可赠送数量（1-99）">
-            <textarea id="giftDesc" rows="4" placeholder="请分享这个物品背后的故事（文字比例更大，更易阅读）"></textarea>
-            <button class="btn" id="addGift">添加记忆物品</button>
-        </div>
-    </div>
-
-    <!-- 礼物列表 -->
-    <div class="gift-list" id="giftList"></div>
-
-    <!-- 申领弹窗（填写昵称） -->
-    <div class="claim-modal" id="claimModal">
-        <div class="claim-card">
-            <h3 class="claim-title">申领这份回忆</h3>
-            <input type="text" id="nicknameInput" class="nickname-input" placeholder="请输入你的昵称（方便认领礼物）" maxlength="10">
-            <button class="btn" id="confirmClaim">确认申领</button>
-        </div>
-    </div>
-
-    <!-- 提示框 -->
-    <div class="tip-box" id="tipBox"></div>
-
-    <script>
-        // 初始化数据（GitHub Pages本地存储适配）
-        let giftData = JSON.parse(localStorage.getItem('giftData') || '[]');
-        let clickNum = 0;
-        let clickTimer = null;
-        let currentGiftId = ''; // 记录当前申领的礼物ID
-
-        // 页面加载完成后执行（确保GitHub Pages加载顺序）
-        window.addEventListener('load', function() {
-            // 初始化欢迎信
-            const letterContent = document.getElementById('letterContent');
-            const letterEdit = document.getElementById('letterEdit');
-            const savedLetter = localStorage.getItem('savedLetter');
-            if (savedLetter) {
-                letterContent.innerText = savedLetter;
-                letterEdit.value = savedLetter;
-            } else {
-                letterEdit.value = letterContent.innerText;
-            }
-
-            // 检查是否看过欢迎信
-            if (localStorage.getItem('hasReadLetter') === 'true') {
-                document.getElementById('letterBox').style.display = 'none';
-            }
-
-            // 渲染礼物列表
-            renderGifts();
-
-            // 绑定所有事件
-            bindAllEvents();
-        });
-
-        // 绑定所有事件
-        function bindAllEvents() {
-            // 关闭欢迎信
-            document.getElementById('letterClose').addEventListener('click', function() {
-                document.getElementById('letterBox').style.display = 'none';
-                localStorage.setItem('hasReadLetter', 'true');
-            });
-
-            // 激活管理员模式（3次点击）
-            document.getElementById('adminIcon').addEventListener('click', function() {
-                clickNum++;
-                clearTimeout(clickTimer);
-                clickTimer = setTimeout(() => { clickNum = 0; }, 2000);
-                
-                if (clickNum === 3) {
-                    const adminPanel = document.getElementById('adminPanel');
-                    adminPanel.classList.toggle('show');
-                    showTip(adminPanel.classList.contains('show') ? '管理员模式已激活 ✨' : '管理员模式已关闭');
-                    clickNum = 0;
-                }
-            });
-
-            // 保存欢迎信
-            document.getElementById('saveLetter').addEventListener('click', function() {
-                const newLetter = document.getElementById('letterEdit').value.trim();
-                if (newLetter) {
-                    document.getElementById('letterContent').innerText = newLetter;
-                    localStorage.setItem('savedLetter', newLetter);
-                    showTip('信件保存成功 💛');
-                } else {
-                    showTip('请输入信件内容！');
-                }
-            });
-
-            // 图片上传
-            document.getElementById('uploadBox').addEventListener('click', function() {
-                document.getElementById('fileInput').click();
-            });
-
-            document.getElementById('fileInput').addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file && file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        document.getElementById('previewImg').src = event.target.result;
-                        document.getElementById('previewImg').style.display = 'block';
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    showTip('请上传图片文件（JPG/PNG）！');
-                }
-            });
-
-            // 添加礼物
-            document.getElementById('addGift').addEventListener('click', function() {
-                const name = document.getElementById('giftName').value.trim();
-                const stock = parseInt(document.getElementById('giftStock').value);
-                const desc = document.getElementById('giftDesc').value.trim();
-                const imgSrc = document.getElementById('previewImg').src;
-
-                if (!name || !desc || !imgSrc) {
-                    showTip('请填写所有信息并上传图片！');
-                    return;
-                }
-                if (isNaN(stock) || stock < 1 || stock > 99) {
-                    showTip('数量必须在1-99之间！');
-                    return;
-                }
-
-                // 添加新礼物（新增claimers数组存储申领人昵称）
-                giftData.push({
-                    id: Date.now().toString(),
-                    name: name,
-                    stock: stock,
-                    desc: desc,
-                    img: imgSrc,
-                    claimed: 0,
-                    claimers: [] // 存储申领人昵称
-                });
-                localStorage.setItem('giftData', JSON.stringify(giftData));
-
-                // 重置表单
-                document.getElementById('giftName').value = '';
-                document.getElementById('giftStock').value = 1;
-                document.getElementById('giftDesc').value = '';
-                document.getElementById('previewImg').src = '';
-                document.getElementById('previewImg').style.display = 'none';
-                document.getElementById('fileInput').value = '';
-
-                // 重新渲染
-                renderGifts();
-                showTip('物品添加成功 🎉');
-            });
-
-            // 确认申领（填写昵称后）
-            document.getElementById('confirmClaim').addEventListener('click', function() {
-                const nickname = document.getElementById('nicknameInput').value.trim();
-                if (!nickname) {
-                    showTip('请输入你的昵称！');
-                    return;
-                }
-
-                // 找到当前申领的礼物
-                const index = giftData.findIndex(g => g.id === currentGiftId);
-                if (index !== -1) {
-                    // 添加昵称到申领人列表
-                    giftData[index].claimers.push(nickname);
-                    giftData[index].claimed++;
-                    localStorage.setItem('giftData', JSON.stringify(giftData));
-                    
-                    // 关闭弹窗，重新渲染
-                    document.getElementById('claimModal').classList.remove('show');
-                    document.getElementById('nicknameInput').value = '';
-                    renderGifts();
-                    showTip(`🎉 ${nickname}，你已成功申领这份礼物！`);
-                }
-            });
-        }
-
-        // 渲染礼物列表（新增昵称展示）
-        function renderGifts() {
-            const giftList = document.getElementById('giftList');
-            giftList.innerHTML = '';
-
-            if (giftData.length === 0) {
-                giftList.innerHTML = `
-                    <div style="grid-column: 1/-1; text-align:center; padding:var(--spacing-lg); color:var(--text-light);">
-                        还没有添加记忆物品哦～添加一些和朋友们分享吧！ 🎁
-                    </div>
-                `;
-                return;
-            }
-
-            giftData.forEach(gift => {
-                const isAvailable = gift.claimed < gift.stock;
-                const card = document.createElement('div');
-                card.className = 'gift-card';
-                
-                // 构建申领人列表HTML
-                let claimersHtml = '';
-                if (gift.claimers.length > 0) {
-                    claimersHtml = `<div class="claimer-list">
-                        <strong>申领人：</strong><br>
-                        ${gift.claimers.map(name => `<div class="claimer-item">• ${name}</div>`).join('')}
-                    </div>`;
-                }
-
-                // 卡片HTML（新增昵称展示）
-                card.innerHTML = `
-                    <img src="${gift.img}" class="gift-img">
-                    <div class="gift-info">
-                        <h3 class="gift-name">${gift.name}</h3>
-                        <span class="stock-tag ${!isAvailable ? 'stock-end' : ''}">
-                            ${isAvailable ? `可申领: ${gift.stock - gift.claimed} 🧡` : '已申领完毕 💛'}
-                        </span>
-                        <p class="gift-desc">${gift.desc}</p>
-                        ${claimersHtml} <!-- 展示申领人昵称 -->
-                        <button class="claim-btn" ${!isAvailable ? 'disabled' : ''} data-id="${gift.id}">
-                            ${isAvailable ? '申领这份回忆' : '已被申领'}
-                        </button>
-                    </div>
-                `;
-                giftList.appendChild(card);
-
-                // 申领按钮事件（点击弹出昵称输入框）
-                if (isAvailable) {
-                    card.querySelector('.claim-btn').addEventListener('click', function() {
-                        currentGiftId = this.dataset.id;
-                        document.getElementById('claimModal').classList.add('show');
-                        document.getElementById('nicknameInput').focus(); // 自动聚焦输入框
-                    });
-                }
-            });
-        }
-
-        // 显示提示框
-        function showTip(msg) {
-            const tipBox = document.getElementById('tipBox');
-            tipBox.innerText = msg;
-            tipBox.classList.add('show');
-            setTimeout(() => { tipBox.classList.remove('show'); }, 3000);
-        }
-
-        // 适配GitHub Pages：监听页面刷新/跳转，保持本地存储
-        window.addEventListener('beforeunload', function() {
-            localStorage.setItem('giftData', JSON.stringify(giftData));
-        });
-    </script>
-</body>
-</html>
