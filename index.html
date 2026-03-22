@@ -226,6 +226,476 @@
             background: var(--primary);
             color: white;
             font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.3px;
+        }
+
+        .btn:hover {
+            background: #7A6448;
+            transform: translateY(-2px);
+        }
+
+        .gift-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-lg);
+        }
+
+        .gift-card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(139, 115, 85, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .gift-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .gift-img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border-bottom: 1px solid rgba(139, 115, 85, 0.1);
+        }
+
+        .gift-info {
+            padding: var(--spacing-md);
+        }
+
+        .gift-name {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--primary);
+            margin-bottom: var(--spacing-xs);
+            line-height: 1.4;
+        }
+
+        .stock-tag {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-bottom: var(--spacing-sm);
+            background: rgba(139, 115, 85, 0.1);
+            color: var(--primary);
+            font-weight: 400;
+        }
+
+        .stock-end {
+            background: rgba(120, 120, 120, 0.1);
+            color: var(--text-light);
+        }
+
+        .gift-desc {
+            font-size: 16px;
+            color: var(--text-main);
+            margin-bottom: var(--spacing-sm);
+            line-height: 1.7;
+        }
+
+        .claimer-list {
+            font-size: 14px;
+            color: var(--primary);
+            margin-bottom: var(--spacing-sm);
+            padding-left: var(--spacing-xs);
+        }
+
+        .claimer-item {
+            margin-bottom: 4px;
+        }
+
+        .claim-btn {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--primary);
+            background: transparent;
+            color: var(--primary);
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .claim-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .claim-btn:disabled {
+            border-color: var(--text-light);
+            color: var(--text-light);
+            cursor: not-allowed;
+            background: rgba(120, 120, 120, 0.05);
+        }
+
+        .claim-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 99;
+            padding: var(--spacing-sm);
+        }
+
+        .claim-modal.show {
+            display: flex;
+        }
+
+        .claim-card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+            max-width: 350px;
+            width: 100%;
+            box-shadow: var(--shadow);
+        }
+
+        .claim-title {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--primary);
+            margin-bottom: var(--spacing-sm);
+            text-align: center;
+        }
+
+        .nickname-input {
+            margin-bottom: var(--spacing-md);
+        }
+
+        .tip-box {
+            position: fixed;
+            bottom: var(--spacing-md);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            padding: 12px 24px;
+            border-radius: var(--border-radius);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 99;
+            font-size: 14px;
+            box-shadow: var(--shadow);
+        }
+
+        .tip-box.show {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .gift-list {
+                grid-template-columns: 1fr;
+                gap: var(--spacing-sm);
+            }
+
+            .letter-card {
+                padding: var(--spacing-md);
+            }
+
+            .nav-bar {
+                margin: var(--spacing-sm) 0;
+            }
+
+            .gift-img {
+                height: 180px;
+            }
+
+            .gift-info {
+                padding: var(--spacing-sm);
+            }
+
+            .gift-desc {
+                font-size: 15px;
+            }
         }
     </style>
 </head>
+<body>
+    <div class="letter-box" id="letterBox">
+        <div class="letter-card">
+            <button class="letter-close" id="letterClose">×</button>
+            <h2 class="letter-title">致我亲爱的朋友们</h2>
+            <p class="letter-content" id="letterContent">
+                当我准备踏上新的旅程，想把这些承载着我们共同回忆的小物件分享给你。每一件物品都藏着一段时光、一次欢笑，或是一个让我们的日子更温暖的瞬间。<br><br>
+                这不是告别，只是想让我们的回忆一直相伴，即便我们走向不同的方向。谢谢你带来的快乐、支持，还有那些难忘的瞬间。心怀感恩，始终。
+            </p>
+            <p class="letter-sign">你的朋友 [我的名字]</p>
+        </div>
+    </div>
+
+    <div class="nav-bar">
+        <h1 class="nav-title">Memorables 2026 🧡</h1>
+        <div class="admin-icon" id="adminIcon">⚙️</div>
+    </div>
+
+    <div class="admin-panel" id="adminPanel">
+        <div class="form-item">
+            <label class="form-title">✍️ 编辑欢迎信</label>
+            <textarea id="letterEdit" rows="6"></textarea>
+            <button class="btn" id="saveLetter">保存信件</button>
+        </div>
+        <div class="form-item">
+            <label class="form-title">📸 添加记忆物品</label>
+            <div class="upload-box" id="uploadBox">拖拽图片到此处，或点击添加</div>
+            <input type="file" id="fileInput" accept="image/*" style="display: none;">
+            <img class="preview-img" id="previewImg">
+            <input type="text" id="giftName" placeholder="请输入物品名称（如：一起喝过的咖啡杯）">
+            <input type="number" id="giftStock" min="1" max="99" value="1" placeholder="可赠送数量（1-99）">
+            <textarea id="giftDesc" rows="4" placeholder="请分享这个物品背后的故事"></textarea>
+            <button class="btn" id="addGift">添加记忆物品</button>
+        </div>
+    </div>
+
+    <div class="gift-list" id="giftList"></div>
+
+    <div class="claim-modal" id="claimModal">
+        <div class="claim-card">
+            <h3 class="claim-title">申领这份回忆</h3>
+            <input type="text" id="nicknameInput" class="nickname-input" placeholder="请输入你的昵称（方便认领礼物）" maxlength="10">
+            <button class="btn" id="confirmClaim">确认申领</button>
+        </div>
+    </div>
+
+    <div class="tip-box" id="tipBox"></div>
+
+    <script>
+        let giftData = [];
+        let clickNum = 0;
+        let clickTimer = null;
+        let currentGiftId = '';
+
+        // 页面加载完成后初始化
+        window.addEventListener('load', function() {
+            // 初始化测试礼物数据（确保页面有内容）
+            giftData = [
+                {
+                    id: "1001",
+                    name: "回忆礼物 - 咖啡杯",
+                    stock: 2,
+                    desc: "这是我们一起喝咖啡时用的杯子，藏着很多开心的瞬间～",
+                    img: "https://picsum.photos/400/300",
+                    claimed: 0,
+                    claimers: []
+                },
+                {
+                    id: "1002",
+                    name: "回忆礼物 - 笔记本",
+                    stock: 1,
+                    desc: "这个笔记本里记着我们一起规划的旅行，分享给你～",
+                    img: "https://picsum.photos/400/300?2",
+                    claimed: 0,
+                    claimers: []
+                }
+            ];
+
+            // 渲染礼物列表
+            renderGifts();
+
+            // 初始化欢迎信编辑框
+            const letterContent = document.getElementById('letterContent').innerText;
+            document.getElementById('letterEdit').value = letterContent;
+
+            // 关闭欢迎信的缓存逻辑
+            if (localStorage.getItem('hasReadLetter') === 'true') {
+                document.getElementById('letterBox').style.display = 'none';
+            }
+
+            // 绑定所有事件
+            bindAllEvents();
+        });
+
+        // 渲染礼物列表
+        function renderGifts() {
+            const giftList = document.getElementById('giftList');
+            giftList.innerHTML = '';
+
+            if (giftData.length === 0) {
+                giftList.innerHTML = `
+                    <div style="grid-column: 1/-1; text-align:center; padding:var(--spacing-lg); color:var(--text-light);">
+                        还没有添加记忆物品哦～添加一些和朋友们分享吧！ 🎁
+                    </div>
+                `;
+                return;
+            }
+
+            giftData.forEach(gift => {
+                const isAvailable = gift.claimed < gift.stock;
+                const card = document.createElement('div');
+                card.className = 'gift-card';
+                
+                let claimersHtml = '';
+                if (gift.claimers.length > 0) {
+                    claimersHtml = `<div class="claimer-list">
+                        <strong>申领人：</strong><br>
+                        ${gift.claimers.map(name => `<div class="claimer-item">• ${name}</div>`).join('')}
+                    </div>`;
+                }
+
+                card.innerHTML = `
+                    <img src="${gift.img}" class="gift-img">
+                    <div class="gift-info">
+                        <h3 class="gift-name">${gift.name}</h3>
+                        <span class="stock-tag ${!isAvailable ? 'stock-end' : ''}">
+                            ${isAvailable ? `可申领: ${gift.stock - gift.claimed} 🧡` : '已申领完毕 💛'}
+                        </span>
+                        <p class="gift-desc">${gift.desc}</p>
+                        ${claimersHtml}
+                        <button class="claim-btn" ${!isAvailable ? 'disabled' : ''} data-id="${gift.id}">
+                            ${isAvailable ? '申领这份回忆' : '已被申领'}
+                        </button>
+                    </div>
+                `;
+                giftList.appendChild(card);
+
+                // 绑定申领按钮事件
+                if (isAvailable) {
+                    card.querySelector('.claim-btn').addEventListener('click', function() {
+                        currentGiftId = this.dataset.id;
+                        document.getElementById('claimModal').classList.add('show');
+                        document.getElementById('nicknameInput').focus();
+                    });
+                }
+            });
+        }
+
+        // 绑定所有交互事件
+        function bindAllEvents() {
+            // 关闭欢迎信
+            document.getElementById('letterClose').addEventListener('click', function() {
+                document.getElementById('letterBox').style.display = 'none';
+                localStorage.setItem('hasReadLetter', 'true');
+            });
+
+            // 管理员模式（点击3次⚙️）
+            document.getElementById('adminIcon').addEventListener('click', function() {
+                clickNum++;
+                clearTimeout(clickTimer);
+                clickTimer = setTimeout(() => { clickNum = 0; }, 2000);
+                
+                if (clickNum === 3) {
+                    const adminPanel = document.getElementById('adminPanel');
+                    adminPanel.classList.toggle('show');
+                    showTip(adminPanel.classList.contains('show') ? '管理员模式已激活 ✨' : '管理员模式已关闭');
+                    clickNum = 0;
+                }
+            });
+
+            // 保存欢迎信
+            document.getElementById('saveLetter').addEventListener('click', function() {
+                const newLetter = document.getElementById('letterEdit').value.trim();
+                if (newLetter) {
+                    document.getElementById('letterContent').innerText = newLetter;
+                    showTip('信件保存成功 💛');
+                } else {
+                    showTip('请输入信件内容！');
+                }
+            });
+
+            // 上传图片
+            document.getElementById('uploadBox').addEventListener('click', function() {
+                document.getElementById('fileInput').click();
+            });
+
+            document.getElementById('fileInput').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file && file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        document.getElementById('previewImg').src = event.target.result;
+                        document.getElementById('previewImg').style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    showTip('请上传图片文件！');
+                }
+            });
+
+            // 添加礼物
+            document.getElementById('addGift').addEventListener('click', function() {
+                const name = document.getElementById('giftName').value.trim();
+                const stock = parseInt(document.getElementById('giftStock').value);
+                const desc = document.getElementById('giftDesc').value.trim();
+                const imgSrc = document.getElementById('previewImg').src;
+
+                if (!name || !desc || !imgSrc) {
+                    showTip('请填写所有信息并上传图片！');
+                    return;
+                }
+                if (isNaN(stock) || stock < 1 || stock > 99) {
+                    showTip('数量必须在1-99之间！');
+                    return;
+                }
+
+                const newGift = {
+                    id: Date.now().toString(),
+                    name: name,
+                    stock: stock,
+                    desc: desc,
+                    img: imgSrc,
+                    claimed: 0,
+                    claimers: []
+                };
+
+                giftData.push(newGift);
+                renderGifts();
+
+                // 重置表单
+                document.getElementById('giftName').value = '';
+                document.getElementById('giftStock').value = 1;
+                document.getElementById('giftDesc').value = '';
+                document.getElementById('previewImg').src = '';
+                document.getElementById('previewImg').style.display = 'none';
+                document.getElementById('fileInput').value = '';
+
+                showTip('物品添加成功 🎉');
+            });
+
+            // 确认申领
+            document.getElementById('confirmClaim').addEventListener('click', function() {
+                const nickname = document.getElementById('nicknameInput').value.trim();
+                if (!nickname) {
+                    showTip('请输入你的昵称！');
+                    return;
+                }
+
+                const index = giftData.findIndex(g => g.id === currentGiftId);
+                if (index !== -1) {
+                    // 检查重复申领
+                    if (giftData[index].claimers.includes(nickname)) {
+                        showTip('你已经申领过这个礼物啦！');
+                        return;
+                    }
+
+                    giftData[index].claimers.push(nickname);
+                    giftData[index].claimed++;
+                    renderGifts();
+
+                    document.getElementById('claimModal').classList.remove('show');
+                    document.getElementById('nicknameInput').value = '';
+                    showTip(`🎉 ${nickname}，你已成功申领这份礼物！`);
+                }
+            });
+        }
+
+        // 提示框功能
+        function showTip(msg) {
+            const tipBox = document.getElementById('tipBox');
+            tipBox.innerText = msg;
+            tipBox.classList.add('show');
+            setTimeout(() => { tipBox.classList.remove('show'); }, 3000);
+        }
+    </script>
+</body>
+</html>
