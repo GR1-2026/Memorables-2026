@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>回忆礼物领养站 - 修复版</title>
-<!-- 使用稳定版本的腾讯云云开发SDK -->
+<title>回忆礼物领养站 - 多CDN修复版球球了</title>
+<!-- 多个CDN备用，按顺序尝试 -->
 <script src="https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@2.6.1/dist/cloudbase.full.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
@@ -20,6 +20,7 @@ button:hover{background:#7a402d;}
 .error{background:#f8d7da;color:#721c24;display:block;}
 #giftList{margin-top:20px;}
 .item{background:#fff;padding:15px;border-radius:8px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+.loading{text-align:center;padding:20px;color:#666;}
 </style>
 </head>
 <body>
@@ -41,7 +42,7 @@ button:hover{background:#7a402d;}
 <div id="tip" class="tip"></div>
 
 <!-- 物品列表 -->
-<div id="giftList">加载中...</div>
+<div id="giftList" class="loading">正在初始化...</div>
 
 <script>
 // 你的环境ID
@@ -50,6 +51,15 @@ const ENV_ID = "gr1-3gwaj6dyccc835f1";
 // 核心变量
 let cloudApp = null;
 let isInitialized = false;
+let sdkLoadAttempts = 0;
+const maxSdkLoadAttempts = 3;
+
+// 多个备用的CDN地址
+const sdkCDNs = [
+  'https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@2.6.1/dist/cloudbase.full.js',
+  'https://unpkg.com/@cloudbase/js-sdk@2.6.1/dist/cloudbase.full.js',
+  'https://cdnjs.cloudflare.com/ajax/libs/cloudbase-js-sdk/2.6.1/cloudbase.full.js'
+];
 
 // 工具函数：显示提示
 function showTip(msg, isSuccess) {
@@ -61,11 +71,39 @@ function showTip(msg, isSuccess) {
   }, 3000);
 }
 
+// 动态加载SDK
+function loadSDK(cdnIndex = 0) {
+  if (cdnIndex >= sdkCDNs.length) {
+    showTip("所有CDN都加载失败，请检查网络连接", false);
+    document.getElementById('giftList').innerHTML = '<div class="item">SDK加载失败，请刷新页面重试</div>';
+    return;
+  }
+  
+  sdkLoadAttempts++;
+  console.log(`尝试加载SDK (${sdkLoadAttempts}/${maxSdkLoadAttempts}): ${sdkCDNs[cdnIndex]}`);
+  
+  const script = document.createElement('script');
+  script.src = sdkCDNs[cdnIndex];
+  script.onload = function() {
+    console.log("SDK加载成功，开始初始化...");
+    initCloudBase();
+  };
+  script.onerror = function() {
+    console.log(`CDN ${cdnIndex} 加载失败，尝试下一个...`);
+    if (sdkLoadAttempts < maxSdkLoadAttempts) {
+      loadSDK(cdnIndex + 1);
+    } else {
+      showTip("SDK加载失败，请检查网络连接", false);
+      document.getElementById('giftList').innerHTML = '<div class="item">SDK加载失败，请刷新页面重试或联系管理员</div>';
+    }
+  };
+  document.head.appendChild(script);
+}
+
 // 加载物品列表
 async function loadGiftList() {
   if (!isInitialized || !cloudApp) {
     showTip("SDK初始化中，请稍等...", false);
-    // 1秒后重试
     setTimeout(loadGiftList, 1000);
     return;
   }
@@ -79,7 +117,7 @@ async function loadGiftList() {
     const listEl = document.getElementById('giftList');
     if (res.result && res.result.code === 0) {
       if (res.result.data.length === 0) {
-        listEl.innerHTML = "<div class='item'>暂无物品，点击添加第一个～</div>";
+        listEl.innerHTML = '<div class="item">暂无物品，点击添加第一个～</div>';
       } else {
         listEl.innerHTML = res.result.data.map(gift => `
           <div class='item'>
@@ -93,7 +131,7 @@ async function loadGiftList() {
       showTip('列表加载失败：' + (res.result?.msg || '未知错误'), false);
     }
   } catch (e) {
-    document.getElementById('giftList').innerHTML = "<div class='item'>加载失败，刷新页面重试</div>";
+    document.getElementById('giftList').innerHTML = '<div class="item">加载失败，刷新页面重试</div>';
     showTip('加载异常：' + e.message, false);
   }
 }
@@ -105,11 +143,9 @@ async function addGift() {
     return;
   }
   
-  // 获取输入值
   const giftName = document.getElementById('name').value.trim();
   const giftDesc = document.getElementById('desc').value.trim();
   
-  // 简单校验
   if (!giftName) {
     showTip("请填写物品名称", false);
     return;
@@ -118,7 +154,6 @@ async function addGift() {
   showTip("正在添加物品...", true);
   
   try {
-    // 调用云函数
     const res = await cloudApp.callFunction({
       name: 'gift',
       data: {
@@ -131,13 +166,10 @@ async function addGift() {
       }
     });
     
-    // 处理结果
     if (res.result && res.result.code === 0) {
       showTip('添加成功！物品ID：' + res.result.data._id, true);
-      // 清空表单
       document.getElementById('name').value = '';
       document.getElementById('desc').value = '';
-      // 重新加载列表
       loadGiftList();
     } else {
       showTip('添加失败：' + (res.result?.msg || '云函数返回错误'), false);
@@ -149,8 +181,17 @@ async function addGift() {
 }
 
 // 初始化云开发SDK
-async function initCloudBase() {
+function initCloudBase() {
   try {
+    // 检查window.cloudbase是否存在
+    if (!window.cloudbase || typeof window.cloudbase.init !== 'function') {
+      console.error("cloudbase对象不存在或init不是函数");
+      showTip("SDK对象异常，请刷新页面", false);
+      return;
+    }
+    
+    console.log("开始初始化云开发SDK...");
+    
     // 新版SDK初始化方式
     cloudApp = window.cloudbase.init({
       env: ENV_ID,
@@ -167,25 +208,64 @@ async function initCloudBase() {
     // 绑定事件
     document.getElementById('addBtn').addEventListener('click', addGift);
     
+    showTip("系统初始化成功！", true);
+    
   } catch (error) {
     console.error("SDK初始化失败:", error);
-    showTip("云开发SDK初始化失败，请检查网络或刷新页面", false);
-    document.getElementById('giftList').innerHTML = "<div class='item'>系统初始化失败，请刷新页面</div>";
+    showTip("云开发SDK初始化失败: " + error.message, false);
+    document.getElementById('giftList').innerHTML = '<div class="item">系统初始化失败，请刷新页面</div>';
   }
 }
 
-// 页面加载完成后初始化
+// 页面加载完成后开始初始化
 window.addEventListener('DOMContentLoaded', function() {
-  // 检查SDK是否已加载
-  if (!window.cloudbase) {
-    showTip("SDK加载失败，请检查网络连接", false);
-    document.getElementById('giftList').innerHTML = "<div class='item'>SDK加载失败，请刷新页面</div>";
-    return;
-  }
+  console.log("页面DOM加载完成，开始检查SDK...");
   
-  // 初始化云开发
-  initCloudBase();
+  // 先检查SDK是否已加载
+  if (window.cloudbase && typeof window.cloudbase.init === 'function') {
+    console.log("SDK已通过script标签加载，开始初始化...");
+    initCloudBase();
+  } else {
+    console.log("SDK未加载，开始动态加载...");
+    document.getElementById('giftList').innerHTML = '<div class="loading">正在加载SDK...</div>';
+    
+    // 设置超时检查
+    setTimeout(function() {
+      if (!window.cloudbase) {
+        console.log("script标签加载SDK失败，开始动态加载备用CDN...");
+        loadSDK(0);
+      }
+    }, 2000);
+  }
 });
+
+// 添加手动重试按钮
+function addRetryButton() {
+  const giftList = document.getElementById('giftList');
+  giftList.innerHTML = `
+    <div class="item">
+      <h4>SDK加载失败</h4>
+      <p>无法连接云开发服务，请检查：</p>
+      <ol style="margin: 10px 0; padding-left: 20px;">
+        <li>网络连接是否正常</li>
+        <li>浏览器是否允许运行JavaScript</li>
+        <li>是否在安全网络环境中</li>
+      </ol>
+      <button id="retryBtn" style="background: #4CAF50; margin-top: 10px;">重试连接</button>
+    </div>
+  `;
+  
+  document.getElementById('retryBtn').addEventListener('click', function() {
+    location.reload();
+  });
+}
+
+// 检查SDK是否可用
+function checkSDKAvailability() {
+  if (!window.cloudbase) {
+    setTimeout(checkSDKAvailability, 1000);
+  }
+}
 </script>
 </body>
 </html>
