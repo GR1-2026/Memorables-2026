@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>回忆礼物领养站 - 最终最终版</title>
-<!-- 引入腾讯云最稳定的SDK版本 -->
-<script src="https://res.wx.qq.com/open/js/cloudbase/1.1.0/cloud.js"></script>
+<title>回忆礼物领养站 - 修复版</title>
+<!-- 使用稳定版本的腾讯云云开发SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@2.6.1/dist/cloudbase.full.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{padding:20px;background:#f7f3ee;font-family:Arial;max-width:800px;margin:0 auto;}
@@ -34,7 +34,7 @@ button:hover{background:#7a402d;}
   <label>物品描述</label>
   <textarea id="desc" placeholder="输入描述">测试描述</textarea>
   
-  <button onclick="addGift()">添加物品</button>
+  <button id="addBtn">添加物品</button>
 </div>
 
 <!-- 提示框 -->
@@ -44,22 +44,14 @@ button:hover{background:#7a402d;}
 <div id="giftList">加载中...</div>
 
 <script>
-// ========== 第一步：先初始化所有核心变量，顺序绝对正确 ==========
-// 你的环境ID（确认不要改）
+// 你的环境ID
 const ENV_ID = "gr1-3gwaj6dyccc835f1";
-// 初始化SDK（先等SDK加载，再初始化，杜绝顺序错误）
-let cloudApp = null;
-window.onload = function() {
-  // 等页面+SDK都加载完，再初始化
-  cloudApp = window.cloudbase.init({
-    env: ENV_ID,
-    region: "ap-shanghai"
-  });
-  // 初始化完成后加载列表
-  loadGiftList();
-};
 
-// ========== 工具函数：显示提示（最简单写法） ==========
+// 核心变量
+let cloudApp = null;
+let isInitialized = false;
+
+// 工具函数：显示提示
 function showTip(msg, isSuccess) {
   const tipEl = document.getElementById('tip');
   tipEl.innerText = msg;
@@ -69,17 +61,21 @@ function showTip(msg, isSuccess) {
   }, 3000);
 }
 
-// ========== 加载物品列表（无顺序错误） ==========
+// 加载物品列表
 async function loadGiftList() {
-  if (!cloudApp) {
-    showTip("SDK初始化中，请稍等", false);
+  if (!isInitialized || !cloudApp) {
+    showTip("SDK初始化中，请稍等...", false);
+    // 1秒后重试
+    setTimeout(loadGiftList, 1000);
     return;
   }
+  
   try {
     const res = await cloudApp.callFunction({
       name: 'gift',
       data: { api: 'list' }
     });
+    
     const listEl = document.getElementById('giftList');
     if (res.result && res.result.code === 0) {
       if (res.result.data.length === 0) {
@@ -102,23 +98,27 @@ async function loadGiftList() {
   }
 }
 
-// ========== 添加物品核心函数（零语法错误） ==========
+// 添加物品
 async function addGift() {
-  if (!cloudApp) {
+  if (!isInitialized || !cloudApp) {
     showTip("SDK还在初始化，请稍等", false);
     return;
   }
+  
   // 获取输入值
   const giftName = document.getElementById('name').value.trim();
   const giftDesc = document.getElementById('desc').value.trim();
+  
   // 简单校验
   if (!giftName) {
     showTip("请填写物品名称", false);
     return;
   }
+  
   showTip("正在添加物品...", true);
+  
   try {
-    // 调用云函数（和你测试成功的参数完全一致）
+    // 调用云函数
     const res = await cloudApp.callFunction({
       name: 'gift',
       data: {
@@ -130,6 +130,7 @@ async function addGift() {
         claimed: 0
       }
     });
+    
     // 处理结果
     if (res.result && res.result.code === 0) {
       showTip('添加成功！物品ID：' + res.result.data._id, true);
@@ -146,6 +147,45 @@ async function addGift() {
     console.error('添加物品错误详情：', e);
   }
 }
+
+// 初始化云开发SDK
+async function initCloudBase() {
+  try {
+    // 新版SDK初始化方式
+    cloudApp = window.cloudbase.init({
+      env: ENV_ID,
+      region: "ap-shanghai"
+    });
+    
+    // 标记初始化完成
+    isInitialized = true;
+    console.log("云开发SDK初始化成功");
+    
+    // 加载列表
+    loadGiftList();
+    
+    // 绑定事件
+    document.getElementById('addBtn').addEventListener('click', addGift);
+    
+  } catch (error) {
+    console.error("SDK初始化失败:", error);
+    showTip("云开发SDK初始化失败，请检查网络或刷新页面", false);
+    document.getElementById('giftList').innerHTML = "<div class='item'>系统初始化失败，请刷新页面</div>";
+  }
+}
+
+// 页面加载完成后初始化
+window.addEventListener('DOMContentLoaded', function() {
+  // 检查SDK是否已加载
+  if (!window.cloudbase) {
+    showTip("SDK加载失败，请检查网络连接", false);
+    document.getElementById('giftList').innerHTML = "<div class='item'>SDK加载失败，请刷新页面</div>";
+    return;
+  }
+  
+  // 初始化云开发
+  initCloudBase();
+});
 </script>
 </body>
 </html>
