@@ -4,9 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>回忆礼物领养站</title>
-<script src="https://cdn.bootcdn.net/ajax/libs/cloudbase-js-sdk/2.9.1/cloud.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
 body{background:#f7f3ee;color:#333;padding:16px;max-width:1000px;margin:0 auto}
 .letter-box{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
 .letter-card{background:#fff;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.08);padding:32px;max-width:500px;width:100%;position:relative}
@@ -95,12 +94,14 @@ button.btn{width:100%;background:#8B4B35;color:white;border:none;border-radius:8
 <div class="tip" id="tip"></div>
 
 <script>
+// 核心配置（替换成你的云函数地址）
+const CLOUD_FUNC_URL = "https://gr1-3gwaj6dyccc835f1.service.tcloudbase.com/api/gift";
+
 let giftData = [];
 let currentId = null;
-let db = null;
-let cloud = null;
-
 const $ = id => document.getElementById(id);
+
+// 提示框
 const showTip = (msg) => {
   const t = $("tip");
   t.innerText = msg;
@@ -114,7 +115,7 @@ $("letterClose").onclick = () => {
   localStorage.setItem("readLetter", "1");
 };
 
-// 管理员面板（点3次）
+// 管理员面板（点击3次）
 let adminClick = 0;
 $("adminBtn").onclick = () => {
   adminClick++;
@@ -124,117 +125,199 @@ $("adminBtn").onclick = () => {
   }
 };
 
-// 渲染物品
-function render() {
+// 渲染物品列表
+function renderGifts() {
   const list = $("giftList");
   list.innerHTML = "";
-  if (!giftData.length) {
-    list.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999">暂无物品</div>`;
+  
+  if (giftData.length === 0) {
+    list.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999">暂无回忆物品</div>`;
     return;
   }
-  giftData.forEach(g => {
-    const ok = g.claimed < g.stock;
-    const el = document.createElement("div");
-    el.className = "gift-card";
-    el.innerHTML = `
-      <img src="${g.img}" class="gift-img">
+
+  giftData.forEach(gift => {
+    const isAvailable = gift.claimed < gift.stock;
+    const card = document.createElement("div");
+    card.className = "gift-card";
+    card.innerHTML = `
+      <img src="${gift.img}" class="gift-img">
       <div class="gift-info">
-        <div class="gift-name">${g.name}</div>
-        <div class="tag">${ok ? `可领 ${g.stock - g.claimed}` : '已领完'}</div>
-        <div class="desc">${g.desc}</div>
-        <div class="owners">${g.claimers?.map(n => `• ${n}`).join('<br>') || ''}</div>
-        <button class="receive-btn" ${ok ? '' : 'disabled'} data-id="${g._id}">${ok ? '领取' : '已领完'}</button>
-      </div>`;
-    list.appendChild(el);
-    el.querySelector(".receive-btn").onclick = () => {
-      currentId = g._id;
+        <div class="gift-name">${gift.name}</div>
+        <div class="tag">${isAvailable ? `可领取: ${gift.stock - gift.claimed}` : '已领完'}</div>
+        <div class="desc">${gift.desc}</div>
+        <div class="owners">${gift.claimers?.map(n => `• ${n}`).join('<br>') || ''}</div>
+        <button class="receive-btn" ${isAvailable ? '' : 'disabled'} data-id="${gift.id}">
+          ${isAvailable ? '领取' : '已领完'}
+        </button>
+      </div>
+    `;
+    list.appendChild(card);
+
+    // 领取按钮点击事件
+    card.querySelector(".receive-btn").onclick = () => {
+      currentId = gift.id;
       $("receiveModal").classList.add("show");
     };
   });
 }
 
-// 初始化云开发
-window.onload = async () => {
+// 接口请求封装（替代SDK）
+async function request(api, data = {}, method = "POST") {
+  const res = await fetch(`${CLOUD_FUNC_URL}/${api}`, {
+    method,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+  return res.json();
+}
+
+// 初始化加载数据
+async function init() {
   try {
-    if (localStorage.getItem("readLetter")) $("letterBox").style.display = "none";
+    // 隐藏已读信件
+    if (localStorage.getItem("readLetter")) {
+      $("letterBox").style.display = "none";
+    }
 
-    if (typeof cloudbase === "undefined") throw new Error("云SDK加载异常");
-
-    cloud = new cloudbase.Cloud({ env: "gr1-3gwaj6dyccc835f1" });
-    await cloud.init();
-
-    const auth = cloud.auth();
-    if (!(await auth.getLoginState())) await auth.signInAnonymously();
-
-    db = cloud.database();
-    const { data } = await db.collection("gifts").get();
-    giftData = data;
-    render();
-    showTip("加载成功 ✨");
+    // 从云函数加载数据（不用SDK）
+    const res = await request("list");
+    if (res.code === 0) {
+      giftData = res.data || [];
+      renderGifts();
+      showTip("加载成功 ✨");
+    } else {
+      throw new Error(res.msg || "加载失败");
+    }
   } catch (e) {
     showTip("⚠️ " + e.message);
+    // 降级到本地存储
+    giftData = JSON.parse(localStorage.getItem("giftData") || "[]");
+    renderGifts();
   } finally {
     $("loading").style.display = "none";
   }
-};
+}
 
 // 保存信件
 $("saveLetter").onclick = () => {
-  const v = $("editLetter").value.trim();
-  if (v) $("letterContent").innerText = v;
-  showTip("信件已保存");
+  const content = $("editLetter").value.trim();
+  if (content) {
+    $("letterContent").innerText = content;
+    localStorage.setItem("letterContent", content);
+    showTip("信件保存成功");
+  }
 };
 
 // 添加物品
 $("addGift").onclick = async () => {
   const name = $("giftName").value.trim();
-  const stock = +$("giftStock").value;
+  const stock = Number($("giftStock").value);
   const desc = $("giftDesc").value.trim();
   const file = $("uploadImg").files[0];
-  if (!name || !stock || !desc || !file) return showTip("请填写完整");
 
+  if (!name || !stock || !desc || !file) {
+    showTip("请填写完整信息并上传图片");
+    return;
+  }
+
+  // 读取图片为Base64
   const reader = new FileReader();
-  reader.onload = async e => {
+  reader.onload = async (e) => {
     try {
-      const item = {
-        name, stock, desc,
+      const newGift = {
+        id: Date.now().toString(),
+        name,
+        stock,
+        desc,
         img: e.target.result,
         claimed: 0,
         claimers: []
       };
-      await db.collection("gifts").add({ data: item });
-      const { data } = await db.collection("gifts").get();
-      giftData = data;
-      render();
-      showTip("添加成功 ✅");
-    } catch (err) {
-      showTip("添加失败");
+
+      // 同步到云函数
+      const res = await request("add", newGift);
+      if (res.code === 0) {
+        giftData.push(newGift);
+        renderGifts();
+        // 本地备份
+        localStorage.setItem("giftData", JSON.stringify(giftData));
+        // 清空表单
+        $("giftName").value = "";
+        $("giftStock").value = 1;
+        $("giftDesc").value = "";
+        $("uploadImg").value = "";
+        showTip("物品添加成功 ✅");
+      } else {
+        throw new Error(res.msg);
+      }
+    } catch (e) {
+      showTip("添加失败：" + e.message);
     }
   };
   reader.readAsDataURL(file);
 };
 
-// 领取
+// 确认领取
 $("confirmReceive").onclick = async () => {
-  const nn = $("nickname").value.trim();
-  if (!nn) return showTip("请输入昵称");
-  const item = giftData.find(x => x._id === currentId);
-  if (!item || item.claimers?.includes(nn)) return showTip("已领取过");
+  const nickname = $("nickname").value.trim();
+  if (!nickname) {
+    showTip("请输入你的昵称");
+    return;
+  }
+
+  const giftIndex = giftData.findIndex(g => g.id === currentId);
+  if (giftIndex === -1) {
+    showTip("物品不存在");
+    $("receiveModal").classList.remove("show");
+    return;
+  }
+
+  const gift = giftData[giftIndex];
+  if (gift.claimers.includes(nickname)) {
+    showTip("你已领取过该物品");
+    return;
+  }
 
   try {
-    item.claimers.push(nn);
-    item.claimed++;
-    await db.collection("gifts").doc(currentId).update({
-      data: { claimers: item.claimers, claimed: item.claimed }
+    // 更新数据
+    gift.claimers.push(nickname);
+    gift.claimed++;
+
+    // 同步到云函数
+    const res = await request("update", {
+      id: currentId,
+      claimers: gift.claimers,
+      claimed: gift.claimed
     });
-    $("receiveModal").classList.remove("show");
-    const { data } = await db.collection("gifts").get();
-    giftData = data;
-    render();
-    showTip(`🎉 ${nn} 领取成功`);
+
+    if (res.code === 0) {
+      // 更新本地数据并渲染
+      giftData[giftIndex] = gift;
+      localStorage.setItem("giftData", JSON.stringify(giftData));
+      renderGifts();
+      // 关闭弹窗
+      $("receiveModal").classList.remove("show");
+      $("nickname").value = "";
+      showTip(`🎉 ${nickname} 领取成功`);
+    } else {
+      throw new Error(res.msg);
+    }
   } catch (e) {
-    showTip("领取失败");
+    showTip("领取失败：" + e.message);
   }
+};
+
+// 页面加载完成初始化
+window.onload = async () => {
+  // 恢复本地保存的信件内容
+  const savedLetter = localStorage.getItem("letterContent");
+  if (savedLetter) {
+    $("letterContent").innerText = savedLetter;
+    $("editLetter").value = savedLetter;
+  }
+  
+  // 加载数据
+  await init();
 };
 </script>
 </body>
