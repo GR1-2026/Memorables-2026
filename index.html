@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yuhan's 2026 🧡</title>
+    <title> Memorables-2026 🧡</title>
     <base href="./">
     <!-- 引入云开发SDK -->
     <script src="https://res.wx.qq.com/open/js/cloudbase/2.9.1/cloud.js"></script>
@@ -505,25 +505,27 @@
         let clickNum = 0;
         let clickTimer = null;
         let currentGiftId = '';
-        let cloud = null; // 云开发实例
-        let db = null;    // 数据库实例
+        let cloud = null;
+        let db = null;
+
+        // 立即绑定关闭信件按钮（修复核心）
+        document.getElementById('letterClose').addEventListener('click', function() {
+            document.getElementById('letterBox').style.display = 'none';
+            localStorage.setItem('hasReadLetter', 'true');
+        });
 
         // 页面加载完成后初始化
         window.addEventListener('load', async function() {
-            // 显示加载遮罩
             const loadingOverlay = document.getElementById('loadingOverlay');
             loadingOverlay.classList.add('show');
 
             try {
-                // 1. 免密钥初始化云开发 + 强制匿名登录（无本地兜底）
                 cloud = new cloudbase.Cloud({
-                    env: "gr1-3gwaj6dyccc835f1" // 仅保留环境ID，移除敏感密钥
+                    env: "gr1-3gwaj6dyccc835f1"
                 });
 
-                // 必须初始化成功，否则抛出错误
                 await cloud.init();
                 
-                // 必须匿名登录成功，否则抛出错误
                 const auth = cloud.auth();
                 const loginState = await auth.getLoginState();
                 if (!loginState) {
@@ -531,19 +533,15 @@
                     if (!loginRes) throw new Error("匿名登录失败");
                 }
 
-                // 必须获取数据库实例，否则抛出错误
                 db = cloud.database();
                 if (!db) throw new Error("获取数据库实例失败");
 
-                // 2. 强制从云数据库加载数据（无本地兜底）
                 const res = await db.collection('gifts').get();
                 giftData = res.data.length > 0 ? res.data : [];
 
-                // 初始化成功提示
                 showTip("云数据库连接成功 ✨", "success");
 
             } catch (e) {
-                // 初始化失败，显示详细错误并阻止页面使用
                 const errorMsg = `云数据库初始化失败：${e.message}
 请联系管理员检查：
 1. 云环境ID是否正确
@@ -552,9 +550,7 @@
 4. 网络是否正常`;
                 
                 showTip(errorMsg, "error");
-                // 禁用所有交互按钮
                 disableAllButtons();
-                // 显示错误提示在礼物列表区域
                 document.getElementById('giftList').innerHTML = `
                     <div style="grid-column: 1/-1; text-align:center; padding:var(--spacing-lg); color:#e53e3e; line-height: 1.8;">
                         <strong>⚠️ 系统异常</strong><br>
@@ -565,11 +561,9 @@
                 `;
                 console.error("云初始化详细错误：", e);
             } finally {
-                // 隐藏加载遮罩
                 loadingOverlay.classList.remove('show');
             }
 
-            // 3. 基础初始化（仅当云初始化成功时执行）
             if (db) {
                 renderGifts();
                 const letterContent = document.getElementById('letterContent').innerText;
@@ -624,7 +618,6 @@
                 `;
                 giftList.appendChild(card);
 
-                // 绑定领取按钮事件
                 if (isAvailable) {
                     card.querySelector('.receive-btn').addEventListener('click', function() {
                         currentGiftId = this.dataset.id;
@@ -635,15 +628,9 @@
             });
         }
 
-        // 绑定所有交互事件
+        // 绑定交互事件
         function bindAllEvents() {
-            // 关闭欢迎信
-            document.getElementById('letterClose').addEventListener('click', function() {
-                document.getElementById('letterBox').style.display = 'none';
-                localStorage.setItem('hasReadLetter', 'true');
-            });
-
-            // 管理员模式（点击3次⚙️）
+            // 管理员模式
             document.getElementById('adminIcon').addEventListener('click', function() {
                 clickNum++;
                 clearTimeout(clickTimer);
@@ -687,14 +674,13 @@
                 }
             });
 
-            // 添加礼物（强制云同步）
+            // 添加物品
             document.getElementById('addGift').addEventListener('click', async function() {
                 const name = document.getElementById('giftName').value.trim();
                 const stock = parseInt(document.getElementById('giftStock').value);
                 const desc = document.getElementById('giftDesc').value.trim();
                 const imgSrc = document.getElementById('previewImg').src;
 
-                // 基础校验
                 if (!name || !desc || !imgSrc) {
                     showTip('请填写所有信息并上传图片！', "error");
                     return;
@@ -704,12 +690,10 @@
                     return;
                 }
 
-                // 显示加载状态
                 this.disabled = true;
                 this.innerText = "添加中...";
 
                 try {
-                    // 添加到本地数组
                     const newGift = {
                         id: Date.now().toString(),
                         name: name,
@@ -721,12 +705,9 @@
                     };
                     giftData.push(newGift);
                     
-                    // 强制同步到云数据库（失败则回滚）
                     await db.collection('gifts').set({ data: giftData });
                     
-                    // 同步成功
                     renderGifts();
-                    // 重置表单
                     document.getElementById('giftName').value = '';
                     document.getElementById('giftStock').value = 1;
                     document.getElementById('giftDesc').value = '';
@@ -736,18 +717,16 @@
                     
                     showTip('物品添加成功并同步到云端 🎉', "success");
                 } catch (e) {
-                    // 同步失败，回滚本地数据
                     giftData.pop();
                     showTip(`添加失败：${e.message}（请联系管理员）`, "error");
                     console.error("添加物品同步错误：", e);
                 } finally {
-                    // 恢复按钮状态
                     this.disabled = false;
                     this.innerText = "添加记忆物品";
                 }
             });
 
-            // 确认领取（强制云同步）
+            // 确认领取
             document.getElementById('confirmReceive').addEventListener('click', async function() {
                 const nickname = document.getElementById('nicknameInput').value.trim();
                 if (!nickname) {
@@ -761,44 +740,37 @@
                     return;
                 }
 
-                // 检查重复领取
                 if (giftData[index].claimers.includes(nickname)) {
                     showTip('你已经领取过这个物品啦！', "error");
                     return;
                 }
 
-                // 显示加载状态
                 this.disabled = true;
                 this.innerText = "领取中...";
 
                 try {
-                    // 修改本地数据
                     giftData[index].claimers.push(nickname);
                     giftData[index].claimed++;
                     
-                    // 强制同步到云数据库（失败则回滚）
                     await db.collection('gifts').set({ data: giftData });
                     
-                    // 同步成功
                     renderGifts();
                     document.getElementById('receiveModal').classList.remove('show');
                     document.getElementById('nicknameInput').value = '';
                     showTip(`🎉 ${nickname}，你已成功领取这份物品！`, "success");
                 } catch (e) {
-                    // 同步失败，回滚本地数据
                     giftData[index].claimers.pop();
                     giftData[index].claimed--;
                     showTip(`领取失败：${e.message}（请联系管理员）`, "error");
                     console.error("领取同步错误：", e);
                 } finally {
-                    // 恢复按钮状态
                     this.disabled = false;
                     this.innerText = "确认领取";
                 }
             });
         }
 
-        // 禁用所有交互按钮（初始化失败时）
+        // 禁用按钮
         function disableAllButtons() {
             const allBtns = document.querySelectorAll('.btn, .receive-btn, .admin-icon, .upload-box');
             allBtns.forEach(btn => {
@@ -811,18 +783,16 @@
             });
         }
 
-        // 提示框功能（区分成功/错误）
+        // 提示
         function showTip(msg, type = "success") {
             const tipBox = document.getElementById('tipBox');
             tipBox.innerText = msg;
-            // 成功：默认橙色，错误：红色
             tipBox.className = `tip-box ${type === "error" ? "error-tip" : ""}`;
             tipBox.classList.add('show');
             setTimeout(() => {
                 tipBox.classList.remove('show');
-                // 恢复默认样式
                 tipBox.className = "tip-box";
-            }, type === "error" ? 5000 : 3000); // 错误提示显示5秒，成功显示3秒
+            }, type === "error" ? 5000 : 3000);
         }
     </script>
 </body>
