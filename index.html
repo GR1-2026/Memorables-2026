@@ -11,7 +11,7 @@ body{background:#f7f3ee;color:#333;padding:16px;max-width:1000px;margin:0 auto}
 
 /* 欢迎信弹窗 */
 .letter-box{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
-.letter-card{background:#fff;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.08);padding:32px;max-width:500px;width:100%}
+.letter-card{background:#fff;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.08);padding:32px;max-width:500px;width:100%;position:relative}
 .letter-close{position:absolute;top:20px;right:20px;width:36px;height:36px;border-radius:50%;background:#f3f3f3;border:none;cursor:pointer;font-size:18px;color:#666}
 .letter-title{text-align:center;font-size:22px;margin-bottom:20px;color:#8B4B35}
 .letter-content{line-height:1.7;font-size:15px;color:#444;margin-bottom:16px}
@@ -69,15 +69,13 @@ button.btn:active{background:#7a402d}
     <button class="letter-close" id="letterClose">×</button>
     <h2 class="letter-title">致我亲爱的朋友们</h2>
     <div class="letter-content" id="letterContent">
-当我准备踏上新的旅程，想把这些承载着我们共同回忆的小物件分享给你。
+欢迎光临~
 
-每一件物品都藏着一段时光、一次欢笑，或是一个让我们温暖很久的瞬间。
-
-这不是告别，只是换一种方式，把回忆留给你。
+这里的每一件物品都藏着一段时光、一次欢笑
 
 谢谢你来过，也谢谢你陪我走过。
     </div>
-    <div class="letter-sign">—— 你的朋友</div>
+    <div class="letter-sign">—— 李宇晗</div>
   </div>
 </div>
 
@@ -177,6 +175,92 @@ let giftData = [];
 let currentGiftId = null;
 let imgBase64 = "";
 
+// ========== 渲染物品列表 ==========
+function renderGiftList() {
+  const listEl = $("giftList");
+  
+  if (!giftData.length) {
+    listEl.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999">暂无回忆物品，点击⚙️添加吧～</div>`;
+    return;
+  }
+
+  listEl.innerHTML = giftData.map(gift => {
+    const remaining = (gift.stock || 1) - (gift.claimed || 0);
+    const canReceive = remaining > 0;
+    const receivers = gift.claimers?.join("、") || "暂无领取记录";
+    
+    return `
+    <div class="gift-card">
+      <img class="gift-img" src="${gift.img || 'https://picsum.photos/260/180?random=' + gift._id}" alt="${gift.name}">
+      <div class="gift-info">
+        <div class="gift-name">${gift.name}</div>
+        <span class="tag">剩余${remaining}份</span>
+        <div class="desc">${gift.desc || '暂无描述'}</div>
+        <div class="owners">领取记录：${receivers}</div>
+        <button class="receive-btn" ${!canReceive ? 'disabled' : ''} onclick="openReceiveModal('${gift._id}')">
+          ${canReceive ? '领取' : '已领完'}
+        </button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ========== 领取物品逻辑 ==========
+function openReceiveModal(giftId) {
+  // 校验库存
+  const gift = giftData.find(g => g._id === giftId);
+  if (!gift) {
+    showTip("❌ 物品不存在");
+    return;
+  }
+  const remaining = (gift.stock || 1) - (gift.claimed || 0);
+  if (remaining <= 0) {
+    showTip("❌ 该物品已领完");
+    return;
+  }
+  
+  currentGiftId = giftId;
+  $("receiveModal").style.display = "flex";
+  $("nickname").value = "";
+  $("nickname").focus();
+}
+
+async function confirmReceive() {
+  const nickname = $("nickname").value.trim();
+  if (!nickname) {
+    showTip("❌ 请输入你的昵称");
+    $("nickname").focus();
+    return;
+  }
+
+  try {
+    const gift = giftData.find(g => g._id === currentGiftId);
+    const newClaimers = [...(gift.claimers || []), nickname];
+    const newClaimed = (gift.claimed || 0) + 1;
+
+    // 调用云端更新接口
+    const updateResult = await requestCloud("update", {
+      id: currentGiftId,
+      claimers: newClaimers,
+      claimed: newClaimed
+    });
+
+    // 更新本地数据
+    giftData = giftData.map(g => {
+      if (g._id === currentGiftId) return updateResult.data;
+      return g;
+    });
+
+    // 刷新列表
+    renderGiftList();
+    $("receiveModal").style.display = "none";
+    showTip("✅ 领取成功！");
+  } catch (error) {
+    showTip("❌ 领取失败，请重试");
+    console.error("领取错误：", error);
+  }
+}
+
 // ========== 初始化 ==========
 async function init() {
   try {
@@ -205,9 +289,142 @@ async function init() {
   }
 }
 
-// ========== 渲染物品列表 ==========
-function renderGiftList() {
-  const listEl = $("giftList");
-  
-  if (!giftData.length) {
-    listEl.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999">暂无回忆物品，点击⚙️添加吧～
+// ========== 绑定所有事件 ==========
+function bindEvents() {
+  // 1. 关闭欢迎信弹窗
+  $("letterClose").addEventListener('click', function() {
+    $("letterBox").style.display = "none";
+    localStorage.setItem("hasReadLetter", "1");
+    showTip("✅ 欢迎信已关闭");
+  });
+
+  // 2. 管理员按钮事件
+  let adminClickCount = 0;
+  $("adminBtn").addEventListener('click', () => {
+    adminClickCount++;
+    if (adminClickCount === 1) showTip("再点2次进入管理员模式");
+    if (adminClickCount === 2) showTip("最后1次！");
+    
+    if (adminClickCount >= 3) {
+      $("adminPanel").classList.toggle("show");
+      const isShow = $("adminPanel").classList.contains("show");
+      showTip(isShow ? "✅ 管理员模式已开启" : "❌ 管理员模式已关闭");
+      adminClickCount = 0;
+    }
+  });
+
+  // 3. 保存欢迎信
+  $("saveLetter").addEventListener('click', () => {
+    const letterContent = $("editLetter").value.trim();
+    if (!letterContent) {
+      showTip("❌ 欢迎信内容不能为空");
+      $("editLetter").focus();
+      return;
+    }
+    localStorage.setItem("letterContent", letterContent);
+    $("letterContent").innerText = letterContent;
+    showTip("✅ 欢迎信保存成功");
+  });
+
+  // 4. 上传图片
+  $("uploadImg").addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // 限制图片大小
+    if (file.size > 10 * 1024 * 1024) {
+      showTip("❌ 图片大小不能超过10MB");
+      this.value = "";
+      return;
+    }
+
+    // 转换为Base64
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      imgBase64 = e.target.result;
+      showTip("✅ 图片上传成功");
+    };
+    reader.onerror = function() {
+      showTip("❌ 图片读取失败");
+      this.value = "";
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // 5. 添加物品
+  $("addGift").addEventListener('click', async () => {
+    const giftName = $("giftName").value.trim();
+    const giftStock = Number($("giftStock").value);
+    const giftDesc = $("giftDesc").value.trim();
+
+    // 强化校验
+    if (!giftName) {
+      showTip("❌ 物品名称不能为空");
+      $("giftName").focus();
+      return;
+    }
+    if (isNaN(giftStock) || giftStock < 1) {
+      showTip("❌ 数量必须是大于0的数字");
+      $("giftStock").focus();
+      return;
+    }
+    if (!giftDesc) {
+      showTip("❌ 物品描述不能为空");
+      $("giftDesc").focus();
+      return;
+    }
+
+    try {
+      // 构造物品数据
+      const newGift = {
+        name: giftName,
+        stock: giftStock,
+        desc: giftDesc,
+        img: imgBase64 || "",
+        claimers: [],
+        claimed: 0
+      };
+
+      // 调用云端添加接口
+      const addResult = await requestCloud("add", newGift);
+
+      // 更新本地数据
+      giftData.unshift(addResult.data);
+
+      // 刷新列表
+      renderGiftList();
+
+      // 清空表单
+      $("giftName").value = "";
+      $("giftStock").value = "1";
+      $("giftDesc").value = "";
+      $("uploadImg").value = "";
+      imgBase64 = "";
+
+      showTip("✅ 物品添加到云端成功！");
+    } catch (error) {
+      showTip("❌ 添加失败，请重试");
+      console.error("添加物品错误：", error);
+    }
+  });
+
+  // 6. 确认领取
+  $("confirmReceive").addEventListener('click', confirmReceive);
+
+  // 7. 点击弹窗外层关闭领取弹窗
+  $("receiveModal").addEventListener('click', function(e) {
+    if (e.target === this) {
+      $("receiveModal").style.display = "none";
+    }
+  });
+}
+
+// ========== 启动程序 ==========
+bindEvents();
+init();
+
+// 全局暴露领取函数（供列表按钮调用）
+window.openReceiveModal = openReceiveModal;
+</script>
+</body>
+</html>
