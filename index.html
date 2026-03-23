@@ -3,155 +3,134 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>回忆礼物领养站 - 测试版</title>
-<!-- 引入腾讯云官方SDK（解决跨域核心） -->
-<script src="https://imgcache.qq.com/qcloud/cloudbase-js-sdk/4.4.10/cloudbase.full.js"></script>
+<title>回忆礼物领养站 - 最终版</title>
+<!-- 腾讯云SDK（固定正确地址，无版本问题） -->
+<script src="https://res.wx.qq.com/open/js/cloudbase/1.1.0/cloud.js"></script>
 <style>
-/* 基础样式，保证功能可用 */
-*{margin:0;padding:0;box-sizing:border-box;font-family:Arial,sans-serif;}
-body{padding:20px;background:#f7f3ee;max-width:800px;margin:0 auto;}
-h1{color:#8B4B35;margin-bottom:20px;font-size:24px;}
-.admin-panel{background:white;padding:20px;border-radius:8px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
-.form-item{margin-bottom:15px;}
-label{display:block;margin-bottom:5px;color:#666;font-size:14px;}
-input,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;font-size:14px;}
-button{background:#8B4B35;color:white;border:none;padding:12px 20px;border-radius:4px;cursor:pointer;font-size:16px;width:100%;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{padding:20px;background:#f7f3ee;font-family:Arial;max-width:800px;margin:0 auto;}
+h1{color:#8B4B35;margin-bottom:20px;}
+.box{background:#fff;padding:20px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);margin-bottom:20px;}
+label{display:block;margin:8px 0 4px;color:#666;}
+input,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-bottom:10px;}
+button{width:100%;padding:12px;background:#8B4B35;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:16px;}
 button:hover{background:#7a402d;}
-.tip{padding:10px;margin:10px 0;border-radius:4px;font-size:14px;display:none;}
+.tip{padding:10px;margin:10px 0;border-radius:4px;display:none;}
 .success{background:#d4edda;color:#155724;display:block;}
 .error{background:#f8d7da;color:#721c24;display:block;}
-.gift-list{margin-top:20px;}
-.gift-item{background:white;padding:15px;border-radius:8px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
-.gift-item h3{color:#333;margin-bottom:5px;}
-.gift-item p{color:#666;font-size:14px;margin-bottom:5px;}
+#giftList{margin-top:20px;}
+.item{background:#fff;padding:15px;border-radius:8px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
 </style>
 </head>
 <body>
 <h1>回忆礼物领养站 🧡</h1>
 
-<!-- 管理员添加物品面板 -->
-<div class="admin-panel">
-  <h3>添加回忆物品</h3>
-  <div class="form-item">
-    <label>物品名称</label>
-    <input type="text" id="giftName" placeholder="比如：童年的小熊" value="测试物品">
-  </div>
-  <div class="form-item">
-    <label>物品描述</label>
-    <textarea id="giftDesc" placeholder="比如：小学毕业同桌送的礼物">测试描述</textarea>
-  </div>
-  <button onclick="addGift()">添加物品</button>
+<!-- 添加物品面板 -->
+<div class="box">
+  <h3>添加物品</h3>
+  <label>物品名称</label>
+  <input type="text" id="name" placeholder="输入名称" value="测试物品">
+  
+  <label>物品描述</label>
+  <textarea id="desc" placeholder="输入描述">测试描述</textarea>
+  
+  <button onclick="add()">添加物品</button>
 </div>
 
 <!-- 提示框 -->
 <div id="tip" class="tip"></div>
 
 <!-- 物品列表 -->
-<div class="gift-list" id="giftList">
-  <p>加载中...</p>
-</div>
+<div id="giftList">加载中...</div>
 
 <script>
-// ========== 核心配置（只改这一行环境ID） ==========
-const ENV_ID = "gr1-3gwaj6dyccc835f1"; // 你的环境ID，确认不要改
-const FUNCTION_NAME = "gift"; // 你的云函数名，确认不要改
+// 1. 核心配置（确认这行是你的环境ID，不要改）
+const env = "gr1-3gwaj6dyccc835f1";
 
-// ========== 初始化腾讯云SDK（解决跨域关键） ==========
-cloud.init({
-  env: ENV_ID,
-  region: "ap-shanghai" // 固定上海，和你的云函数一致
+// 2. 初始化SDK（固定正确写法，无变量错误）
+const tcb = window.cloudbase;
+const app = tcb.init({
+  env: env,
+  region: "ap-shanghai"
 });
 
-// ========== 工具函数 ==========
-// 显示提示框
-function showTip(msg, isSuccess) {
-  const tip = document.getElementById('tip');
-  tip.innerText = msg;
-  tip.className = `tip ${isSuccess ? 'success' : 'error'}`;
-  setTimeout(() => { tip.className = 'tip'; }, 3000);
+// 3. 工具函数：显示提示
+function tip(msg, isOk) {
+  const el = document.getElementById('tip');
+  el.innerText = msg;
+  el.className = `tip ${isOk ? 'success' : 'error'}`;
+  setTimeout(() => el.className = 'tip', 3000);
 }
 
-// 调用云函数的核心方法（官方SDK方式）
-async function callCloudFunction(api, data = {}) {
+// 4. 加载列表（页面加载就执行）
+async function load() {
   try {
-    const result = await cloud.callFunction({
-      name: FUNCTION_NAME,
-      data: { api, ...data }
+    const res = await app.callFunction({
+      name: 'gift',
+      data: { api: 'list' }
     });
-    return result.result; // SDK返回的核心数据在result里
-  } catch (error) {
-    showTip(`调用失败：${error.message}`, false);
-    throw error;
-  }
-}
-
-// ========== 加载物品列表 ==========
-async function loadGiftList() {
-  try {
-    const result = await callCloudFunction("list");
-    if (result.code === 0) {
-      const listEl = document.getElementById('giftList');
-      if (result.data.length === 0) {
-        listEl.innerHTML = "<p>暂无物品，添加第一个吧～</p>";
+    const list = document.getElementById('giftList');
+    if (res.result.code === 0) {
+      if (res.result.data.length === 0) {
+        list.innerHTML = "<div class='item'>暂无物品，点击添加第一个～</div>";
       } else {
-        listEl.innerHTML = result.data.map(gift => `
-          <div class="gift-item">
-            <h3>${gift.name}</h3>
-            <p>${gift.desc}</p>
-            <p>剩余：${gift.stock - gift.claimed} 份</p>
+        list.innerHTML = res.result.data.map(g => `
+          <div class='item'>
+            <h4>${g.name}</h4>
+            <p>${g.desc}</p>
+            <p>剩余：${g.stock - g.claimed}份</p>
           </div>
         `).join('');
       }
     } else {
-      showTip(`加载失败：${result.msg}`, false);
+      tip('加载失败：' + res.result.msg, false);
     }
-  } catch (error) {
-    document.getElementById('giftList').innerHTML = "<p>加载失败，请刷新</p>";
+  } catch (e) {
+    document.getElementById('giftList').innerHTML = "<div class='item'>加载失败，刷新重试</div>";
   }
 }
 
-// ========== 添加物品核心函数 ==========
-async function addGift() {
-  const name = document.getElementById('giftName').value.trim();
-  const desc = document.getElementById('giftDesc').value.trim();
-
-  // 简单校验
+// 5. 添加物品（核心函数，无任何多余逻辑）
+async function add() {
+  const name = document.getElementById('name').value.trim();
+  const desc = document.getElementById('desc').value.trim();
+  
   if (!name) {
-    showTip("请填写物品名称", false);
+    tip('请填写物品名称', false);
     return;
   }
 
-  showTip("正在添加物品...", true);
+  tip('正在添加...', true);
   
   try {
-    // 调用云函数add接口
-    const result = await callCloudFunction("add", {
-      name: name,
-      desc: desc,
-      stock: 1, // 固定1份，测试用
-      claimers: [],
-      claimed: 0
+    const res = await app.callFunction({
+      name: 'gift',
+      data: {
+        api: 'add',
+        name: name,
+        desc: desc,
+        stock: 1,
+        claimers: [],
+        claimed: 0
+      }
     });
 
-    if (result.code === 0) {
-      showTip(`添加成功！物品ID：${result.data._id}`, true);
-      // 清空表单
-      document.getElementById('giftName').value = "";
-      document.getElementById('giftDesc').value = "";
-      // 重新加载列表
-      loadGiftList();
+    if (res.result.code === 0) {
+      tip('添加成功！ID：' + res.result.data._id, true);
+      // 清空表单+重新加载列表
+      document.getElementById('name').value = '';
+      document.getElementById('desc').value = '';
+      load();
     } else {
-      showTip(`添加失败：${result.msg}`, false);
+      tip('添加失败：' + res.result.msg, false);
     }
-  } catch (error) {
-    showTip(`添加失败：${error.message}`, false);
+  } catch (e) {
+    tip('添加失败：' + e.message, false);
   }
 }
 
-// ========== 页面加载时执行 ==========
-window.onload = function() {
-  loadGiftList(); // 加载列表
-};
+// 6. 页面加载自动执行
+window.onload = load;
 </script>
 </body>
 </html>
