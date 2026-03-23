@@ -2,429 +2,60 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>回忆礼物领养站 🧡</title>
+<title>测试添加物品</title>
 <style>
-/* 全局样式 */
-*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-body{background:#f7f3ee;color:#333;padding:16px;max-width:1000px;margin:0 auto}
-
-/* 欢迎信弹窗 */
-.letter-box{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
-.letter-card{background:#fff;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.08);padding:32px;max-width:500px;width:100%;position:relative}
-.letter-close{position:absolute;top:20px;right:20px;width:36px;height:36px;border-radius:50%;background:#f3f3f3;border:none;cursor:pointer;font-size:18px;color:#666}
-.letter-title{text-align:center;font-size:22px;margin-bottom:20px;color:#8B4B35}
-.letter-content{line-height:1.7;font-size:15px;color:#444;margin-bottom:16px}
-.letter-sign{text-align:right;font-size:14px;color:#666}
-
-/* 导航栏 */
-.nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
-.title{font-size:20px;color:#8B4B35}
-.admin-btn{width:36px;height:36px;border-radius:50%;background:#f3f3f3;border:none;cursor:pointer;font-size:18px;color:#666}
-
-/* 管理员面板 */
-.admin-panel{background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.05);padding:20px;margin-bottom:24px;display:none}
-.admin-panel.show{display:block}
-.form-item{margin-bottom:16px}
-.form-item label{display:block;margin-bottom:8px;font-size:14px;color:#666}
-input,textarea{width:100%;border:1px solid #e0e0e0;border-radius:8px;padding:12px;font-size:14px;color:#333}
-textarea{min-height:80px;resize:vertical}
-button.btn{width:100%;background:#8B4B35;color:white;border:none;border-radius:8px;padding:14px;font-size:15px;cursor:pointer}
-button.btn:active{background:#7a402d}
-
-/* 物品列表 */
-.gift-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
-.gift-card{background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.05);overflow:hidden}
-.gift-img{width:100%;height:180px;object-fit:cover}
-.gift-info{padding:16px}
-.gift-name{font-size:16px;margin-bottom:8px;color:#333}
-.tag{display:inline-block;padding:4px 8px;background:#f7f3ee;border-radius:4px;font-size:12px;color:#8B4B35;margin-bottom:8px}
-.desc{font-size:14px;color:#666;line-height:1.5;margin-bottom:8px}
-.owners{font-size:12px;color:#999;margin-bottom:8px}
-.receive-btn{width:100%;background:#8B4B35;color:white;border:none;border-radius:8px;padding:10px;font-size:14px;cursor:pointer}
-.receive-btn:disabled{background:#ccc;cursor:not-allowed}
-
-/* 领取弹窗 */
-.modal{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;padding:20px;z-index:9}
-.modal.show{display:flex}
-.modal-card{background:#fff;border-radius:16px;padding:24px;max-width:360px;width:100%}
-.modal-title{font-size:18px;margin-bottom:16px;text-align:center;color:#8B4B35}
-
-/* 提示框 */
-.tip{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:10px 18px;border-radius:4px;font-size:14px;opacity:0;transition:opacity 0.3s;z-index:999}
-.tip.show{opacity:1}
-
-/* 云端状态标签 */
-.cloud-tag{position:fixed;top:10px;left:10px;background:rgba(25, 118, 210, 0.9);color:white;padding:5px 10px;border-radius:4px;font-size:12px;z-index:99}
+body{padding:20px;font-family:Arial;}
+.tip{padding:10px;margin:10px 0;border-radius:4px;display:none;}
+.success{background:#d4edda;color:#155724;display:block;}
+.error{background:#f8d7da;color:#721c24;display:block;}
+input,textarea,button{width:300px;margin:5px 0;padding:8px;display:block;}
+button{background:#007bff;color:white;border:none;border-radius:4px;cursor:pointer;}
 </style>
 </head>
 <body>
-
-<!-- 云端状态标签 -->
-<div class="cloud-tag" id="cloudTag">☁️ 云端模式（数据实时同步）</div>
-
-<!-- 欢迎信弹窗 -->
-<div class="letter-box" id="letterBox">
-  <div class="letter-card">
-    <button class="letter-close" id="letterClose">×</button>
-    <h2 class="letter-title">致我亲爱的朋友们</h2>
-    <div class="letter-content" id="letterContent">
-欢迎光临~
-
-这里的每一件物品都藏着一段时光、一次欢笑
-
-谢谢你来过，也谢谢你陪我走过。
-    </div>
-    <div class="letter-sign">—— 李宇晗</div>
-  </div>
-</div>
-
-<!-- 导航栏 -->
-<div class="nav">
-  <div class="title">回忆礼物领养站 🧡</div>
-  <button class="admin-btn" id="adminBtn">⚙️</button>
-</div>
-
-<!-- 管理员面板 -->
-<div class="admin-panel" id="adminPanel">
-  <div class="form-item">
-    <label>编辑欢迎信</label>
-    <textarea id="editLetter" rows="4"></textarea>
-    <button class="btn" id="saveLetter">保存信件</button>
-  </div>
-  <div class="form-item">
-    <label>添加回忆物品</label>
-    <input type="text" id="giftName" placeholder="比如：童年的小熊">
-    <input type="number" id="giftStock" value="1" min="1" placeholder="可领取数量（至少1）">
-    <textarea id="giftDesc" placeholder="比如：小学毕业同桌送的礼物"></textarea>
-    <input type="file" id="uploadImg" accept="image/*">
-    <button class="btn" id="addGift">添加物品</button>
-  </div>
-</div>
-
-<!-- 物品列表 -->
-<div class="gift-grid" id="giftList"></div>
-
-<!-- 领取弹窗 -->
-<div class="modal" id="receiveModal">
-  <div class="modal-card">
-    <h3 class="modal-title">领取这份回忆</h3>
-    <input type="text" id="nickname" placeholder="请输入你的昵称">
-    <button class="btn" id="confirmReceive">确认领取</button>
-  </div>
-</div>
-
-<!-- 全局提示框 -->
-<div class="tip" id="tip"></div>
+<h3>测试添加物品（仅核心功能）</h3>
+<input type="text" id="name" placeholder="物品名称" value="测试物品">
+<textarea id="desc" placeholder="物品描述">测试描述</textarea>
+<button onclick="addGift()">添加物品</button>
+<div id="tip" class="tip"></div>
 
 <script>
-// ========== 核心配置（已匹配你的云开发环境） ==========
-const ENV_ID = "gr1-3gwaj6dyccc835f1"; // 正确的环境ID
-const FUNCTION_NAME = "gift"; // 正确的云函数名
-const CLOUD_FUNC_URL = `https://${ENV_ID}.ap-shanghai.tcb-api.tencentcloudapi.com/web/${FUNCTION_NAME}`;
+// 你的云函数地址（直接写死，避免拼接错误）
+const URL = "https://gr1-3gwaj6dyccc835f1.ap-shanghai.tcb-api.tencentcloudapi.com/web/gift";
 
-// ========== 工具函数 ==========
-const $ = id => document.getElementById(id);
-
-// 显示提示框
-function showTip(msg) {
-  const tip = $("tip");
+// 显示提示
+function showTip(msg, isSuccess) {
+  const tip = document.getElementById('tip');
   tip.innerText = msg;
-  tip.classList.add("show");
-  clearTimeout(tip.timer);
-  tip.timer = setTimeout(() => tip.classList.remove("show"), 3000);
+  tip.className = isSuccess ? "tip success" : "tip error";
 }
 
-// 纯云端请求函数
-async function requestCloud(api, data = {}) {
-  showTip("正在同步云端数据...");
+// 核心添加函数
+async function addGift() {
+  showTip("正在添加...", true);
   
   try {
-    const response = await fetch(CLOUD_FUNC_URL, {
+    const response = await fetch(URL, {
       method: "POST",
-      mode: "cors",
-      credentials: "omit",
-      timeout: 15000,
-      headers: {
-        "Content-Type": "application/json",
-        "X-CloudBase-Env": ENV_ID
-      },
-      body: JSON.stringify({ api, ...data })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        api: "add",
+        name: document.getElementById('name').value,
+        desc: document.getElementById('desc').value,
+        stock: 1
+      })
     });
-
-    if (!response.ok) {
-      throw new Error(`服务器返回错误：${response.status}`);
-    }
 
     const result = await response.json();
-    
-    if (result.code !== 0) {
-      throw new Error(result.msg || "云端处理失败");
+    if (result.code === 0) {
+      showTip(`添加成功！物品ID：${result.data._id}`, true);
+    } else {
+      showTip(`添加失败：${result.msg}`, false);
     }
-
-    return result;
-  } catch (error) {
-    showTip(`❌ 云端请求失败：${error.message}`);
-    console.error("云端请求详情：", error);
-    throw error;
+  } catch (err) {
+    showTip(`添加失败：${err.message}`, false);
   }
 }
-
-// ========== 全局状态 ==========
-let giftData = [];
-let currentGiftId = null;
-let imgBase64 = "";
-
-// ========== 渲染物品列表 ==========
-function renderGiftList() {
-  const listEl = $("giftList");
-  
-  if (!giftData.length) {
-    listEl.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999">暂无回忆物品，点击⚙️添加吧～</div>`;
-    return;
-  }
-
-  listEl.innerHTML = giftData.map(gift => {
-    const remaining = (gift.stock || 1) - (gift.claimed || 0);
-    const canReceive = remaining > 0;
-    const receivers = gift.claimers?.join("、") || "暂无领取记录";
-    
-    return `
-    <div class="gift-card">
-      <img class="gift-img" src="${gift.img || 'https://picsum.photos/260/180?random=' + gift._id}" alt="${gift.name}">
-      <div class="gift-info">
-        <div class="gift-name">${gift.name}</div>
-        <span class="tag">剩余${remaining}份</span>
-        <div class="desc">${gift.desc || '暂无描述'}</div>
-        <div class="owners">领取记录：${receivers}</div>
-        <button class="receive-btn" ${!canReceive ? 'disabled' : ''} onclick="openReceiveModal('${gift._id}')">
-          ${canReceive ? '领取' : '已领完'}
-        </button>
-      </div>
-    </div>`;
-  }).join("");
-}
-
-// ========== 领取物品逻辑 ==========
-function openReceiveModal(giftId) {
-  // 校验库存
-  const gift = giftData.find(g => g._id === giftId);
-  if (!gift) {
-    showTip("❌ 物品不存在");
-    return;
-  }
-  const remaining = (gift.stock || 1) - (gift.claimed || 0);
-  if (remaining <= 0) {
-    showTip("❌ 该物品已领完");
-    return;
-  }
-  
-  currentGiftId = giftId;
-  $("receiveModal").style.display = "flex";
-  $("nickname").value = "";
-  $("nickname").focus();
-}
-
-async function confirmReceive() {
-  const nickname = $("nickname").value.trim();
-  if (!nickname) {
-    showTip("❌ 请输入你的昵称");
-    $("nickname").focus();
-    return;
-  }
-
-  try {
-    const gift = giftData.find(g => g._id === currentGiftId);
-    const newClaimers = [...(gift.claimers || []), nickname];
-    const newClaimed = (gift.claimed || 0) + 1;
-
-    // 调用云端更新接口
-    const updateResult = await requestCloud("update", {
-      id: currentGiftId,
-      claimers: newClaimers,
-      claimed: newClaimed
-    });
-
-    // 更新本地数据
-    giftData = giftData.map(g => {
-      if (g._id === currentGiftId) return updateResult.data;
-      return g;
-    });
-
-    // 刷新列表
-    renderGiftList();
-    $("receiveModal").style.display = "none";
-    showTip("✅ 领取成功！");
-  } catch (error) {
-    showTip("❌ 领取失败，请重试");
-    console.error("领取错误：", error);
-  }
-}
-
-// ========== 初始化 ==========
-async function init() {
-  try {
-    // 1. 拉取物品列表
-    const listResult = await requestCloud("list");
-    giftData = listResult.data || [];
-    
-    // 2. 加载欢迎信
-    const savedLetter = localStorage.getItem("letterContent");
-    if (savedLetter) {
-      $("letterContent").innerText = savedLetter;
-      $("editLetter").value = savedLetter;
-    }
-    
-    // 3. 隐藏已读的欢迎信
-    if (localStorage.getItem("hasReadLetter")) {
-      $("letterBox").style.display = "none";
-    }
-
-    // 4. 渲染列表
-    renderGiftList();
-    showTip("✅ 云端数据加载完成");
-  } catch (error) {
-    showTip("❌ 初始化失败，请刷新页面重试");
-    console.error("初始化错误：", error);
-  }
-}
-
-// ========== 绑定所有事件 ==========
-function bindEvents() {
-  // 1. 关闭欢迎信弹窗
-  $("letterClose").addEventListener('click', function() {
-    $("letterBox").style.display = "none";
-    localStorage.setItem("hasReadLetter", "1");
-    showTip("✅ 欢迎信已关闭");
-  });
-
-  // 2. 管理员按钮事件
-  let adminClickCount = 0;
-  $("adminBtn").addEventListener('click', () => {
-    adminClickCount++;
-    if (adminClickCount === 1) showTip("再点2次进入管理员模式");
-    if (adminClickCount === 2) showTip("最后1次！");
-    
-    if (adminClickCount >= 3) {
-      $("adminPanel").classList.toggle("show");
-      const isShow = $("adminPanel").classList.contains("show");
-      showTip(isShow ? "✅ 管理员模式已开启" : "❌ 管理员模式已关闭");
-      adminClickCount = 0;
-    }
-  });
-
-  // 3. 保存欢迎信
-  $("saveLetter").addEventListener('click', () => {
-    const letterContent = $("editLetter").value.trim();
-    if (!letterContent) {
-      showTip("❌ 欢迎信内容不能为空");
-      $("editLetter").focus();
-      return;
-    }
-    localStorage.setItem("letterContent", letterContent);
-    $("letterContent").innerText = letterContent;
-    showTip("✅ 欢迎信保存成功");
-  });
-
-  // 4. 上传图片
-  $("uploadImg").addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    // 限制图片大小
-    if (file.size > 10 * 1024 * 1024) {
-      showTip("❌ 图片大小不能超过10MB");
-      this.value = "";
-      return;
-    }
-
-    // 转换为Base64
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      imgBase64 = e.target.result;
-      showTip("✅ 图片上传成功");
-    };
-    reader.onerror = function() {
-      showTip("❌ 图片读取失败");
-      this.value = "";
-    };
-    reader.readAsDataURL(file);
-  });
-
-  // 5. 添加物品
-  $("addGift").addEventListener('click', async () => {
-    const giftName = $("giftName").value.trim();
-    const giftStock = Number($("giftStock").value);
-    const giftDesc = $("giftDesc").value.trim();
-
-    // 强化校验
-    if (!giftName) {
-      showTip("❌ 物品名称不能为空");
-      $("giftName").focus();
-      return;
-    }
-    if (isNaN(giftStock) || giftStock < 1) {
-      showTip("❌ 数量必须是大于0的数字");
-      $("giftStock").focus();
-      return;
-    }
-    if (!giftDesc) {
-      showTip("❌ 物品描述不能为空");
-      $("giftDesc").focus();
-      return;
-    }
-
-    try {
-      // 构造物品数据
-      const newGift = {
-        name: giftName,
-        stock: giftStock,
-        desc: giftDesc,
-        img: imgBase64 || "",
-        claimers: [],
-        claimed: 0
-      };
-
-      // 调用云端添加接口
-      const addResult = await requestCloud("add", newGift);
-
-      // 更新本地数据
-      giftData.unshift(addResult.data);
-
-      // 刷新列表
-      renderGiftList();
-
-      // 清空表单
-      $("giftName").value = "";
-      $("giftStock").value = "1";
-      $("giftDesc").value = "";
-      $("uploadImg").value = "";
-      imgBase64 = "";
-
-      showTip("✅ 物品添加到云端成功！");
-    } catch (error) {
-      showTip("❌ 添加失败，请重试");
-      console.error("添加物品错误：", error);
-    }
-  });
-
-  // 6. 确认领取
-  $("confirmReceive").addEventListener('click', confirmReceive);
-
-  // 7. 点击弹窗外层关闭领取弹窗
-  $("receiveModal").addEventListener('click', function(e) {
-    if (e.target === this) {
-      $("receiveModal").style.display = "none";
-    }
-  });
-}
-
-// ========== 启动程序 ==========
-bindEvents();
-init();
-
-// 全局暴露领取函数（供列表按钮调用）
-window.openReceiveModal = openReceiveModal;
 </script>
 </body>
 </html>
