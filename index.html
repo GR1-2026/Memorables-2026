@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>回忆礼物领养站 - 官方CDN修复版</title>
-<!-- 使用腾讯云官方CDN，latest表示最新版本 -->
-<script src="https://static.cloudbase.net/cloudbase-js-sdk/latest/cloudbase.full.js"></script>
+<title>回忆礼物领养站 - 上海区域</title>
+<!-- 使用微信官方CDN，稳定版本 -->
+<script src="https://res.wx.qq.com/open/js/cloudbase/1.3.2/cloud.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{padding:20px;background:#f7f3ee;font-family:Arial;max-width:800px;margin:0 auto;}
@@ -47,6 +47,9 @@ button:hover{background:#7a402d;}
 <script>
 // 你的环境ID
 const ENV_ID = "gr1-3gwaj6dyccc835f1";
+
+// 重要：根据腾讯云控制台显示，环境在上海
+const REGION = "ap-shanghai";  // 确认是上海
 
 // 核心变量
 let cloudApp = null;
@@ -152,12 +155,12 @@ function initCloudBase() {
       return;
     }
     
-    console.log("开始初始化云开发SDK...");
+    console.log("开始初始化云开发SDK，环境ID:", ENV_ID, "区域:", REGION);
     
-    // 新版SDK初始化方式
+    // 初始化SDK - 使用上海区域
     cloudApp = window.cloudbase.init({
       env: ENV_ID,
-      region: "ap-shanghai"
+      region: REGION
     });
     
     // 标记初始化完成
@@ -175,7 +178,26 @@ function initCloudBase() {
   } catch (error) {
     console.error("SDK初始化失败:", error);
     showTip("云开发SDK初始化失败: " + error.message, false);
-    document.getElementById('giftList').innerHTML = '<div class="item">系统初始化失败，请刷新页面</div>';
+    document.getElementById('giftList').innerHTML = `
+      <div class="item">
+        <h4>初始化失败</h4>
+        <p>错误: ${error.message}</p>
+        <p>可能原因:</p>
+        <ol style="margin: 10px 0; padding-left: 20px;">
+          <li>安全域名未配置（重要！）</li>
+          <li>网络连接问题</li>
+          <li>环境ID或区域配置错误</li>
+        </ol>
+        <h5 style="margin-top: 10px;">安全域名配置步骤：</h5>
+        <ol style="margin: 10px 0; padding-left: 20px;">
+          <li>登录腾讯云控制台 -> 云开发 CloudBase</li>
+          <li>选择环境 gr1-3gwaj6dyccc835f1</li>
+          <li>左侧菜单：安全配置 -> Web安全域名</li>
+          <li>添加当前域名（本地开发用 localhost 或 127.0.0.1）</li>
+        </ol>
+        <button onclick="location.reload()" style="background: #4CAF50; margin-top: 10px;">刷新页面</button>
+      </div>
+    `;
   }
 }
 
@@ -194,71 +216,58 @@ window.addEventListener('DOMContentLoaded', function() {
     // 设置超时检查
     setTimeout(function() {
       if (!window.cloudbase) {
-        console.log("script标签加载SDK失败，尝试备用方案...");
-        tryAlternativeCDN();
+        showTip("SDK加载失败，请检查网络连接", false);
+        document.getElementById('giftList').innerHTML = `
+          <div class="item">
+            <h4>SDK加载失败</h4>
+            <p>可能原因:</p>
+            <ol style="margin: 10px 0; padding-left: 20px;">
+              <li>网络连接问题，无法访问 https://res.wx.qq.com</li>
+              <li>浏览器安全策略阻止了SDK加载</li>
+              <li>CDN暂时不可用</li>
+            </ol>
+            <button onclick="location.reload()" style="background: #4CAF50; margin-top: 10px;">刷新页面</button>
+            <button onclick="tryAlternativeSDK()" style="background: #2196F3; margin-top: 10px; margin-left: 10px;">使用备用SDK</button>
+          </div>
+        `;
       }
     }, 3000);
   }
 });
 
-// 备用CDN方案
-function tryAlternativeCDN() {
-  console.log("尝试备用CDN方案...");
-  document.getElementById('giftList').innerHTML = '<div class="loading">正在尝试备用CDN...</div>';
+// 备用SDK加载方案
+function tryAlternativeSDK() {
+  console.log("尝试加载备用SDK...");
+  document.getElementById('giftList').innerHTML = '<div class="loading">正在加载备用SDK...</div>';
   
-  // 备用CDN列表（腾讯云官方CDN）
-  const alternativeCDNs = [
-    'https://static.cloudbase.net/cloudbase-js-sdk/2.5.0/cloudbase.full.js', // 使用具体版本号
-    'https://static.cloudbase.net/cloudbase-js-sdk/2.4.0/cloudbase.full.js',
-    'https://static.cloudbase.net/cloudbase-js-sdk/2.3.0/cloudbase.full.js'
-  ];
-  
-  let currentIndex = 0;
-  
-  function loadNextCDN() {
-    if (currentIndex >= alternativeCDNs.length) {
-      // 所有CDN都失败
-      showTip("所有CDN都加载失败，请检查网络连接", false);
-      document.getElementById('giftList').innerHTML = `
-        <div class="item">
-          <h4>SDK加载失败</h4>
-          <p>无法连接云开发服务，请尝试：</p>
-          <ol style="margin: 10px 0; padding-left: 20px;">
-            <li>检查网络连接</li>
-            <li>刷新页面重试</li>
-            <li>联系管理员检查环境配置</li>
-          </ol>
-          <button onclick="location.reload()" style="background: #4CAF50; margin-top: 10px;">刷新页面</button>
-        </div>
-      `;
-      return;
-    }
-    
-    const cdnUrl = alternativeCDNs[currentIndex];
-    console.log(`尝试加载CDN: ${cdnUrl}`);
-    
-    const script = document.createElement('script');
-    script.src = cdnUrl;
-    script.onload = function() {
-      console.log("备用CDN加载成功，开始初始化...");
+  // 尝试腾讯云官方CDN
+  const alternativeSDK = document.createElement('script');
+  alternativeSDK.src = 'https://static.cloudbase.net/cloudbase-js-sdk/1.3.2/cloudbase.full.js';
+  alternativeSDK.onload = function() {
+    console.log("备用SDK加载成功，开始初始化...");
+    // 腾讯云SDK的全局对象是cloudbase
+    if (window.cloudbase && typeof window.cloudbase.init === 'function') {
       initCloudBase();
-    };
-    script.onerror = function() {
-      console.log(`CDN ${currentIndex} 加载失败`);
-      currentIndex++;
-      setTimeout(loadNextCDN, 1000);
-    };
-    document.head.appendChild(script);
-  }
-  
-  loadNextCDN();
-}
-
-// 检查SDK是否可用
-function checkSDKAvailability() {
-  if (!window.cloudbase) {
-    setTimeout(checkSDKAvailability, 1000);
-  }
+    } else {
+      showTip("备用SDK加载但格式不对", false);
+    }
+  };
+  alternativeSDK.onerror = function() {
+    showTip("备用SDK也加载失败，请检查网络", false);
+    document.getElementById('giftList').innerHTML = `
+      <div class="item">
+        <h4>所有SDK都加载失败</h4>
+        <p>请尝试:</p>
+        <ol style="margin: 10px 0; padding-left: 20px;">
+          <li>检查浏览器是否允许加载外部脚本</li>
+          <li>尝试使用其他浏览器（如Chrome）</li>
+          <li>联系管理员</li>
+        </ol>
+        <button onclick="location.reload()" style="background: #4CAF50; margin-top: 10px;">重新加载</button>
+      </div>
+    `;
+  };
+  document.head.appendChild(alternativeSDK);
 }
 </script>
 </body>
