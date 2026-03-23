@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title> “李”物领养站 🧡</title>
+<title>回忆礼物领养站 🧡</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
 body{background:#f7f3ee;color:#333;padding:16px;max-width:1000px;margin:0 auto}
@@ -22,6 +22,7 @@ body{background:#f7f3ee;color:#333;padding:16px;max-width:1000px;margin:0 auto}
 .form-item label{display:block;margin-bottom:8px;font-size:14px;color:#666}
 input,textarea{width:100%;border:1px solid #e0e0e0;border-radius:8px;padding:12px;font-size:14px;margin-bottom:8px}
 button.btn{width:100%;background:#8B4B35;color:white;border:none;border-radius:8px;padding:14px;font-size:15px;cursor:pointer}
+button.btn:active{background:#7a3b2f}
 .gift-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
 .gift-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
 .gift-img{width:100%;height:180px;object-fit:cover}
@@ -70,9 +71,9 @@ button.btn{width:100%;background:#8B4B35;color:white;border:none;border-radius:8
   </div>
   <div class="form-item">
     <label>添加回忆物品</label>
-    <input type="text" id="giftName" placeholder="物品名称">
-    <input type="number" id="giftStock" value="1" min="1" placeholder="可领取数量">
-    <textarea id="giftDesc" placeholder="物品背后的故事"></textarea>
+    <input type="text" id="giftName" placeholder="比如：童年的小熊">
+    <input type="number" id="giftStock" value="1" min="1" placeholder="可领取数量（至少1）">
+    <textarea id="giftDesc" placeholder="比如：小学毕业同桌送的礼物"></textarea>
     <input type="file" id="uploadImg" accept="image/*">
     <button class="btn" id="addGift">添加物品</button>
   </div>
@@ -91,33 +92,43 @@ button.btn{width:100%;background:#8B4B35;color:white;border:none;border-radius:8
 <div class="tip" id="tip"></div>
 
 <script>
-// ============================
-// 云端永久版
-// 不受你那个临时域名影响！
-// ============================
+// 腾讯云官方稳定域名（永久可用）
 const CLOUD_FUNC_URL = "https://gr1-3gwaj6dyccc835f1.ap-shanghai.tcb-api.tencentcloudapi.com/web/gift";
 
 const $ = id => document.getElementById(id);
 
+// 增强版提示框
 function showTip(msg) {
   const t = $("tip");
   t.innerText = msg;
   t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 2000);
+  clearTimeout(t.timer);
+  t.timer = setTimeout(() => t.classList.remove("show"), 2000);
 }
 
+// 增强版请求函数（带加载提示）
 async function request(api, data = {}) {
+  showTip("处理中...");
   try {
     const resp = await fetch(CLOUD_FUNC_URL, {
       method: "POST",
       mode: "cors",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
       body: JSON.stringify({ api, ...data })
     });
-    return await resp.json();
+    
+    if (!resp.ok) {
+      throw new Error(`服务器返回：${resp.status}`);
+    }
+    
+    const result = await resp.json();
+    return result;
   } catch (e) {
-    console.error(e);
-    showTip("操作失败");
+    console.error("请求错误：", e);
+    showTip(`失败：${e.message}`);
     return { code: -1 };
   }
 }
@@ -126,18 +137,24 @@ let giftData = [];
 let currentGiftId = null;
 let imgBase64 = "";
 
+// 加载物品列表（带反馈）
 async function loadList() {
+  showTip("加载物品列表...");
   const res = await request("list");
   if (res.code === 0) {
     giftData = res.data;
     renderList();
+    showTip("加载完成");
+  } else {
+    showTip("加载失败：" + (res.msg || "未知错误"));
   }
 }
 
+// 渲染物品列表
 function renderList() {
   const el = $("giftList");
   if (!giftData.length) {
-    el.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999">暂无回忆物品</div>`;
+    el.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999">暂无回忆物品，点击⚙️添加吧～</div>`;
     return;
   }
   el.innerHTML = giftData.map(g => {
@@ -146,11 +163,11 @@ function renderList() {
     const has = g.claimers?.join("、") || "暂无领取记录";
     return `
     <div class="gift-card">
-      <img class="gift-img" src="${g.img || 'https://picsum.photos/260/180'}">
+      <img class="gift-img" src="${g.img || 'https://picsum.photos/260/180?random=' + g._id}">
       <div class="gift-info">
         <div class="gift-name">${g.name}</div>
         <span class="tag">剩余${left}份</span>
-        <div class="desc">${g.desc || ''}</div>
+        <div class="desc">${g.desc || '暂无描述'}</div>
         <div class="owners">${has}</div>
         <button class="receive-btn" ${canGet ? '' : 'disabled'} onclick="openGet('${g._id}')">
           ${canGet ? '领取这份回忆' : '已领完'}
@@ -160,99 +177,184 @@ function renderList() {
   }).join("");
 }
 
+// 打开领取弹窗
 function openGet(id) {
   currentGiftId = id;
   $("nickname").value = "";
   $("receiveModal").classList.add("show");
 }
 
+// 确认领取（增强验证）
 $("confirmReceive").onclick = async () => {
   const name = $("nickname").value.trim();
-  if (!name) return showTip("请输入昵称");
+  if (!name) {
+    showTip("请输入你的昵称！");
+    return;
+  }
+  
   const g = giftData.find(x => x._id === currentGiftId);
-  if (!g) return;
-  if (g.claimers?.includes(name)) return showTip("已领取过");
+  if (!g) {
+    showTip("物品不存在！");
+    $("receiveModal").classList.remove("show");
+    return;
+  }
+  
+  if (g.claimers?.includes(name)) {
+    showTip("你已经领取过这个物品啦～");
+    return;
+  }
   
   const res = await request("update", {
     id: currentGiftId,
     claimers: [...(g.claimers || []), name],
     claimed: (g.claimed || 0) + 1
   });
+  
   if (res.code === 0) {
     showTip("领取成功 ✨");
     $("receiveModal").classList.remove("show");
     loadList();
+  } else {
+    showTip("领取失败：" + (res.msg || "未知错误"));
   }
 };
 
+// 管理员模式（增强反馈）
 let adminCount = 0;
 $("adminBtn").onclick = () => {
   adminCount++;
   if (adminCount === 3) {
     $("adminPanel").classList.toggle("show");
-    showTip($("adminPanel").classList.contains("show") ? "管理员已开启" : "已关闭");
+    const tip = $("adminPanel").classList.contains("show") 
+      ? "管理员模式已开启 ✨" 
+      : "管理员模式已关闭";
+    showTip(tip);
     adminCount = 0;
   }
 };
 
+// 保存欢迎信（增强验证）
 $("saveLetter").onclick = () => {
   const c = $("editLetter").value.trim();
-  if (!c) return;
+  if (!c) {
+    showTip("请输入信件内容！");
+    return;
+  }
   localStorage.setItem("letterContent", c);
   $("letterContent").innerText = c;
-  showTip("信件保存成功");
+  showTip("信件保存成功 ✨");
 };
 
+// 上传图片（增强反馈）
 $("uploadImg").onchange = (e) => {
   const f = e.target.files[0];
-  if (!f) return;
+  if (!f) {
+    showTip("请选择图片！");
+    return;
+  }
+  
+  // 限制图片大小（10MB）
+  if (f.size > 10 * 1024 * 1024) {
+    showTip("图片不能超过10MB！");
+    return;
+  }
+  
   const r = new FileReader();
-  r.onload = (e) => { imgBase64 = e.target.result; showTip("图片上传成功"); };
+  r.onload = (e) => { 
+    imgBase64 = e.target.result; 
+    showTip("图片上传成功 ✨"); 
+  };
+  r.onerror = () => {
+    showTip("图片读取失败！");
+  };
   r.readAsDataURL(f);
 };
 
+// ========== 重点修复：添加物品功能 ==========
 $("addGift").onclick = async () => {
+  // 1. 严格表单验证（核心修复点）
   const name = $("giftName").value.trim();
   const stock = Number($("giftStock").value);
   const desc = $("giftDesc").value.trim();
-  if (!name || !stock) return showTip("请填写完整信息");
 
+  // 2. 逐个验证，给出明确提示
+  if (!name) {
+    showTip("请输入物品名称！");
+    $("giftName").focus(); // 光标定位到输入框
+    return;
+  }
+  
+  if (isNaN(stock) || stock < 1) {
+    showTip("请输入有效的数量（至少1）！");
+    $("giftStock").focus();
+    return;
+  }
+  
+  if (!desc) {
+    showTip("请输入物品背后的故事！");
+    $("giftDesc").focus();
+    return;
+  }
+
+  // 3. 构造数据并请求
   const res = await request("add", {
-    name, stock, desc, img: imgBase64,
-    claimers: [], claimed: 0
+    name, 
+    stock, 
+    desc, 
+    img: imgBase64 || "",
+    claimers: [], 
+    claimed: 0
   });
 
+  // 4. 明确反馈结果
   if (res.code === 0) {
-    showTip("添加成功 ✅");
+    showTip("物品添加成功 ✨");
+    // 清空表单（增强体验）
     $("giftName").value = "";
     $("giftStock").value = 1;
     $("giftDesc").value = "";
+    $("uploadImg").value = "";
     imgBase64 = "";
+    // 重新加载列表
     loadList();
+  } else {
+    showTip("添加失败：" + (res.msg || "请检查网络后重试"));
   }
 };
 
+// 关闭欢迎信
 $("letterClose").onclick = () => {
   $("letterBox").style.display = "none";
   localStorage.setItem("hasReadLetter", "1");
+  showTip("欢迎信已关闭");
 };
 
+// 关闭领取弹窗（点击外部）
 window.onclick = (e) => {
   if (e.target === $("receiveModal")) {
     $("receiveModal").classList.remove("show");
   }
 };
 
+// 页面初始化（增强容错）
 (async () => {
-  if (localStorage.getItem("hasReadLetter")) {
-    $("letterBox").style.display = "none";
+  try {
+    // 隐藏已读的欢迎信
+    if (localStorage.getItem("hasReadLetter")) {
+      $("letterBox").style.display = "none";
+    }
+    // 加载保存的信件
+    const letter = localStorage.getItem("letterContent");
+    if (letter) {
+      $("letterContent").innerText = letter;
+      $("editLetter").value = letter;
+    }
+    // 加载物品列表
+    await loadList();
+  } catch (e) {
+    console.error("初始化错误：", e);
+    showTip("初始化失败，请刷新页面");
   }
-  const letter = localStorage.getItem("letterContent");
-  if (letter) {
-    $("letterContent").innerText = letter;
-    $("editLetter").value = letter;
-  }
-  await loadList();
 })();
 </script>
 </body>
