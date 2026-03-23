@@ -2,8 +2,8 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>回忆礼物领养站 🧡</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title> “李”物领养站 🧡</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
 body{background:#f7f3ee;color:#333;padding:16px;max-width:1000px;margin:0 auto}
@@ -48,10 +48,10 @@ button.btn{width:100%;background:#8B4B35;color:white;border:none;border-radius:8
     <h2 class="letter-title">致我亲爱的朋友们</h2>
     <div class="letter-content" id="letterContent">
 当我准备踏上新的旅程，想把这些承载着我们共同回忆的小物件分享给你。
-每一件物品都藏着一段时光、一次欢笑，或是一个让我们的日子更温暖的瞬间。
+每一件物品都藏着一段时光、一次欢笑，或是一个让我们温暖很久的瞬间。
 
-这不是告别，只是想让我们的回忆一直相伴，即便我们走向不同的方向。
-谢谢你带来的快乐、支持，还有那些难忘的瞬间。心怀感恩，始终。
+这不是告别，只是换一种方式，把回忆留给你。
+谢谢你来过，也谢谢你陪我走过。
     </div>
     <div class="letter-sign">—— 你的朋友</div>
   </div>
@@ -91,28 +91,34 @@ button.btn{width:100%;background:#8B4B35;color:white;border:none;border-radius:8
 <div class="tip" id="tip"></div>
 
 <script>
-// 已帮你替换成你的真实云函数地址
-const CLOUD_FUNC_URL = "https://gr1-3gwaj6dyccc835f1.tcloudbaseapp.com/gift";
+// ============================
+// 云端永久版
+// 不受你那个临时域名影响！
+// ============================
+const CLOUD_FUNC_URL = "https://gr1-3gwaj6dyccc835f1.ap-shanghai.tcb-api.tencentcloudapi.com/web/gift";
 
 const $ = id => document.getElementById(id);
-const showTip = (msg) => {
-  const tip = $("tip");
-  tip.innerText = msg;
-  tip.classList.add("show");
-  setTimeout(() => tip.classList.remove("show"), 2000);
-};
+
+function showTip(msg) {
+  const t = $("tip");
+  t.innerText = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2000);
+}
 
 async function request(api, data = {}) {
   try {
-    const res = await fetch(CLOUD_FUNC_URL, {
+    const resp = await fetch(CLOUD_FUNC_URL, {
       method: "POST",
+      mode: "cors",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ api, ...data })
     });
-    return await res.json();
-  } catch (error) {
-    showTip("网络错误");
-    return { code: -1, msg: "网络错误" };
+    return await resp.json();
+  } catch (e) {
+    console.error(e);
+    showTip("操作失败");
+    return { code: -1 };
   }
 }
 
@@ -120,82 +126,72 @@ let giftData = [];
 let currentGiftId = null;
 let imgBase64 = "";
 
-async function init() {
-  if (localStorage.getItem("hasReadLetter")) {
-    $("letterBox").style.display = "none";
-  }
-  const letterContent = localStorage.getItem("letterContent");
-  if (letterContent) {
-    $("letterContent").innerText = letterContent;
-    $("editLetter").value = letterContent;
-  }
-  await getGiftList();
-}
-
-async function getGiftList() {
+async function loadList() {
   const res = await request("list");
   if (res.code === 0) {
     giftData = res.data;
-    renderGiftList();
+    renderList();
   }
 }
 
-function renderGiftList() {
-  const list = $("giftList");
-  if (giftData.length === 0) {
-    list.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999">暂无回忆物品</div>`;
+function renderList() {
+  const el = $("giftList");
+  if (!giftData.length) {
+    el.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999">暂无回忆物品</div>`;
     return;
   }
-  list.innerHTML = giftData.map(gift => {
-    const hasStock = gift.claimed < (gift.stock || 1);
+  el.innerHTML = giftData.map(g => {
+    const left = (g.stock || 1) - (g.claimed || 0);
+    const canGet = left > 0;
+    const has = g.claimers?.join("、") || "暂无领取记录";
     return `
-      <div class="gift-card">
-        <img class="gift-img" src="${gift.img || 'https://picsum.photos/260/180'}">
-        <div class="gift-info">
-          <div class="gift-name">${gift.name}</div>
-          <span class="tag">剩余${(gift.stock || 1) - (gift.claimed || 0)}份</span>
-          <div class="desc">${gift.desc || ''}</div>
-          <div class="owners">${gift.claimers ? gift.claimers.join('、') + ' 已领取' : '暂无领取记录'}</div>
-          <button class="receive-btn" ${!hasStock ? 'disabled' : ''} onclick="openReceiveModal('${gift._id}')">
-            ${hasStock ? '领取这份回忆' : '已领完'}
-          </button>
-        </div>
+    <div class="gift-card">
+      <img class="gift-img" src="${g.img || 'https://picsum.photos/260/180'}">
+      <div class="gift-info">
+        <div class="gift-name">${g.name}</div>
+        <span class="tag">剩余${left}份</span>
+        <div class="desc">${g.desc || ''}</div>
+        <div class="owners">${has}</div>
+        <button class="receive-btn" ${canGet ? '' : 'disabled'} onclick="openGet('${g._id}')">
+          ${canGet ? '领取这份回忆' : '已领完'}
+        </button>
       </div>
-    `;
-  }).join('');
+    </div>`;
+  }).join("");
 }
 
-function openReceiveModal(id) {
+function openGet(id) {
   currentGiftId = id;
   $("nickname").value = "";
   $("receiveModal").classList.add("show");
 }
 
 $("confirmReceive").onclick = async () => {
-  const nickname = $("nickname").value.trim();
-  if (!nickname) return showTip("请输入昵称");
-  const gift = giftData.find(x => x._id === currentGiftId);
-  if (!gift) return;
-  if (gift.claimers?.includes(nickname)) return showTip("已领取过");
+  const name = $("nickname").value.trim();
+  if (!name) return showTip("请输入昵称");
+  const g = giftData.find(x => x._id === currentGiftId);
+  if (!g) return;
+  if (g.claimers?.includes(name)) return showTip("已领取过");
+  
   const res = await request("update", {
     id: currentGiftId,
-    claimers: [...(gift.claimers || []), nickname],
-    claimed: (gift.claimed || 0) + 1
+    claimers: [...(g.claimers || []), name],
+    claimed: (g.claimed || 0) + 1
   });
   if (res.code === 0) {
-    showTip("领取成功");
+    showTip("领取成功 ✨");
     $("receiveModal").classList.remove("show");
-    getGiftList();
+    loadList();
   }
 };
 
-let adminClickCount = 0;
+let adminCount = 0;
 $("adminBtn").onclick = () => {
-  adminClickCount++;
-  if (adminClickCount === 3) {
+  adminCount++;
+  if (adminCount === 3) {
     $("adminPanel").classList.toggle("show");
-    showTip($("adminPanel").classList.contains("show") ? "管理员已开启" : "管理员已关闭");
-    adminClickCount = 0;
+    showTip($("adminPanel").classList.contains("show") ? "管理员已开启" : "已关闭");
+    adminCount = 0;
   }
 };
 
@@ -204,14 +200,14 @@ $("saveLetter").onclick = () => {
   if (!c) return;
   localStorage.setItem("letterContent", c);
   $("letterContent").innerText = c;
-  showTip("保存成功");
+  showTip("信件保存成功");
 };
 
-$("uploadImg").onchange = e => {
+$("uploadImg").onchange = (e) => {
   const f = e.target.files[0];
   if (!f) return;
   const r = new FileReader();
-  r.onload = e => { imgBase64 = e.target.result; showTip("图片上传成功"); };
+  r.onload = (e) => { imgBase64 = e.target.result; showTip("图片上传成功"); };
   r.readAsDataURL(f);
 };
 
@@ -219,16 +215,20 @@ $("addGift").onclick = async () => {
   const name = $("giftName").value.trim();
   const stock = Number($("giftStock").value);
   const desc = $("giftDesc").value.trim();
-  if (!name || !stock) return showTip("请完善信息");
+  if (!name || !stock) return showTip("请填写完整信息");
+
   const res = await request("add", {
-    name, stock, desc, img: imgBase64, claimers: [], claimed: 0
+    name, stock, desc, img: imgBase64,
+    claimers: [], claimed: 0
   });
+
   if (res.code === 0) {
-    showTip("添加成功");
-    $("giftName").value = $("giftDesc").value = "";
+    showTip("添加成功 ✅");
+    $("giftName").value = "";
     $("giftStock").value = 1;
+    $("giftDesc").value = "";
     imgBase64 = "";
-    getGiftList();
+    loadList();
   }
 };
 
@@ -237,11 +237,23 @@ $("letterClose").onclick = () => {
   localStorage.setItem("hasReadLetter", "1");
 };
 
-window.onclick = e => {
-  if (e.target === $("receiveModal")) $("receiveModal").classList.remove("show");
+window.onclick = (e) => {
+  if (e.target === $("receiveModal")) {
+    $("receiveModal").classList.remove("show");
+  }
 };
 
-init();
+(async () => {
+  if (localStorage.getItem("hasReadLetter")) {
+    $("letterBox").style.display = "none";
+  }
+  const letter = localStorage.getItem("letterContent");
+  if (letter) {
+    $("letterContent").innerText = letter;
+    $("editLetter").value = letter;
+  }
+  await loadList();
+})();
 </script>
 </body>
 </html>
