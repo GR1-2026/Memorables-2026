@@ -1,697 +1,241 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Memorables 2026 🧡</title>
-    <base href="./">
-
-    <!-- 云开发 SDK 提前加载，保证一定能读到 -->
-    <script src="https://res.wx.qq.com/open/js/cloudbase/2.9.1/cloud.js"></script>
-
-    <style>
-        :root {
-            --primary: #8B7355;
-            --secondary: #D9C5B2;
-            --bg-light: #F9F7F5;
-            --bg-card: #FFFFFF;
-            --text-main: #2D2A26;
-            --text-light: #736B60;
-            --border-radius: 12px;
-            --spacing-xs: 8px;
-            --spacing-sm: 16px;
-            --spacing-md: 24px;
-            --spacing-lg: 32px;
-            --shadow: 0 4px 12px rgba(0,0,0,0.04);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: "Inter", "微软雅黑", sans-serif;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        body {
-            background-color: var(--bg-light);
-            color: var(--text-main);
-            padding: var(--spacing-sm);
-            max-width: 1200px;
-            margin: 0 auto;
-            line-height: 1.65;
-        }
-
-        .letter-box {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255,255,255,0.95);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-            padding: var(--spacing-sm);
-        }
-
-        .letter-card {
-            background: var(--bg-card);
-            border-radius: var(--border-radius);
-            padding: var(--spacing-lg);
-            max-width: 500px;
-            box-shadow: var(--shadow);
-            border: 1px solid rgba(139, 115, 85, 0.1);
-            position: relative;
-        }
-
-        .letter-close {
-            position: absolute;
-            top: var(--spacing-sm);
-            right: var(--spacing-sm);
-            width: 32px;
-            height: 32px;
-            border: none;
-            background: transparent;
-            color: var(--text-light);
-            font-size: 20px;
-            cursor: pointer;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-        }
-
-        .letter-close:hover {
-            background: var(--bg-light);
-            color: var(--primary);
-        }
-
-        .letter-title {
-            font-size: 22px;
-            font-weight: 500;
-            color: var(--primary);
-            text-align: center;
-            margin-bottom: var(--spacing-md);
-            letter-spacing: 0.5px;
-        }
-
-        .letter-content {
-            font-size: 16px;
-            color: var(--text-main);
-            margin-bottom: var(--spacing-md);
-        }
-
-        .letter-sign {
-            font-size: 14px;
-            font-style: italic;
-            color: var(--primary);
-            text-align: right;
-            opacity: 0.8;
-        }
-
-        .nav-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin: var(--spacing-md) 0;
-            padding-bottom: var(--spacing-sm);
-            border-bottom: 1px solid rgba(139, 115, 85, 0.1);
-        }
-
-        .nav-title {
-            font-size: 20px;
-            font-weight: 500;
-            color: var(--primary);
-            letter-spacing: 0.3px;
-        }
-
-        .admin-icon {
-            width: 36px;
-            height: 36px;
-            cursor: pointer;
-            font-size: 20px;
-            color: var(--text-light);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            transition: all 0.3s ease;
-        }
-
-        .admin-icon:hover {
-            background: var(--bg-light);
-            color: var(--primary);
-        }
-
-        .admin-panel {
-            background: var(--bg-card);
-            border-radius: var(--border-radius);
-            padding: var(--spacing-md);
-            margin-bottom: var(--spacing-md);
-            box-shadow: var(--shadow);
-            border: 1px solid rgba(139, 115, 85, 0.1);
-            display: none;
-        }
-
-        .admin-panel.show {
-            display: block;
-        }
-
-        .form-item {
-            margin-bottom: var(--spacing-md);
-        }
-
-        .form-title {
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--primary);
-            margin-bottom: var(--spacing-sm);
-            display: block;
-        }
-
-        input, textarea {
-            width: 100%;
-            padding: 12px 16px;
-            border: 1px solid rgba(139, 115, 85, 0.15);
-            border-radius: var(--border-radius);
-            background: var(--bg-light);
-            font-size: 16px;
-            color: var(--text-main);
-            transition: border 0.3s ease;
-        }
-
-        input:focus, textarea:focus {
-            outline: none;
-            border-color: var(--primary);
-            background: #FFFFFF;
-        }
-
-        textarea {
-            min-height: 120px;
-            resize: vertical;
-            line-height: 1.65;
-        }
-
-        .upload-box {
-            border: 1px dashed rgba(139, 115, 85, 0.3);
-            background: var(--bg-light);
-            border-radius: var(--border-radius);
-            padding: var(--spacing-lg);
-            text-align: center;
-            margin-bottom: var(--spacing-sm);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            color: var(--text-light);
-        }
-
-        .upload-box:hover {
-            border-color: var(--primary);
-            color: var(--primary);
-        }
-
-        .preview-img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-            border-radius: var(--border-radius);
-            margin: var(--spacing-sm) 0;
-            display: none;
-            box-shadow: var(--shadow);
-        }
-
-        .btn {
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: var(--border-radius);
-            background: var(--primary);
-            color: white;
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            letter-spacing: 0.3px;
-        }
-
-        .btn:hover {
-            background: #7A6448;
-            transform: translateY(-2px);
-        }
-
-        .gift-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: var(--spacing-md);
-            margin-bottom: var(--spacing-lg);
-        }
-
-        .gift-card {
-            background: var(--bg-card);
-            border-radius: var(--border-radius);
-            overflow: hidden;
-            box-shadow: var(--shadow);
-            border: 1px solid rgba(139, 115, 85, 0.1);
-            transition: transform 0.3s ease;
-        }
-
-        .gift-card:hover {
-            transform: translateY(-4px);
-        }
-
-        .gift-img {
-            width: 100%;
-            height: 220px;
-            object-fit: cover;
-            border-bottom: 1px solid rgba(139, 115, 85, 0.1);
-        }
-
-        .gift-info {
-            padding: var(--spacing-md);
-        }
-
-        .gift-name {
-            font-size: 18px;
-            font-weight: 500;
-            color: var(--primary);
-            margin-bottom: var(--spacing-xs);
-            line-height: 1.4;
-        }
-
-        .stock-tag {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            margin-bottom: var(--spacing-sm);
-            background: rgba(139, 115, 85, 0.1);
-            color: var(--primary);
-            font-weight: 400;
-        }
-
-        .stock-end {
-            background: rgba(120, 120, 120, 0.1);
-            color: var(--text-light);
-        }
-
-        .gift-desc {
-            font-size: 16px;
-            color: var(--text-main);
-            margin-bottom: var(--spacing-sm);
-            line-height: 1.7;
-        }
-
-        .owner-list {
-            font-size: 14px;
-            color: var(--primary);
-            margin-bottom: var(--spacing-sm);
-            padding-left: var(--spacing-xs);
-        }
-
-        .owner-item {
-            margin-bottom: 4px;
-        }
-
-        .receive-btn {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--primary);
-            background: transparent;
-            color: var(--primary);
-            border-radius: var(--border-radius);
-            font-size: 16px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .receive-btn:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        .receive-btn:disabled {
-            border-color: var(--text-light);
-            color: var(--text-light);
-            cursor: not-allowed;
-            background: rgba(120, 120, 120, 0.05);
-        }
-
-        .receive-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 99;
-            padding: var(--spacing-sm);
-        }
-
-        .receive-modal.show {
-            display: flex;
-        }
-
-        .receive-card {
-            background: var(--bg-card);
-            border-radius: var(--border-radius);
-            padding: var(--spacing-md);
-            max-width: 350px;
-            width: 100%;
-            box-shadow: var(--shadow);
-        }
-
-        .receive-title {
-            font-size: 18px;
-            font-weight: 500;
-            color: var(--primary);
-            margin-bottom: var(--spacing-sm);
-            text-align: center;
-        }
-
-        .nickname-input {
-            margin-bottom: var(--spacing-md);
-        }
-
-        .tip-box {
-            position: fixed;
-            bottom: var(--spacing-md);
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--primary);
-            color: white;
-            padding: 12px 24px;
-            border-radius: var(--border-radius);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-            z-index: 99;
-            font-size: 14px;
-            box-shadow: var(--shadow);
-        }
-
-        .tip-box.show {
-            opacity: 1;
-        }
-
-        .error-tip {
-            background: #e53e3e;
-        }
-
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255,255,255,0.8);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 200;
-            font-size: 18px;
-            color: var(--primary);
-        }
-
-        .loading-overlay.show {
-            display: flex;
-        }
-
-        @media (max-width: 768px) {
-            .gift-list {
-                grid-template-columns: 1fr;
-                gap: var(--spacing-sm);
-            }
-            .letter-card { padding: var(--spacing-md); }
-            .gift-img { height: 180px; }
-            .gift-info { padding: var(--spacing-sm); }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>回忆礼物领养站</title>
+<script src="https://cdn.bootcdn.net/ajax/libs/cloudbase-js-sdk/2.9.1/cloud.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif}
+body{background:#f7f3ee;color:#333;padding:16px;max-width:1000px;margin:0 auto}
+.letter-box{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
+.letter-card{background:#fff;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.08);padding:32px;max-width:500px;width:100%;position:relative}
+.letter-close{position:absolute;right:20px;top:20px;width:36px;height:36px;border-radius:50%;border:none;background:#f3f3f3;cursor:pointer;font-size:18px;color:#666}
+.letter-title{text-align:center;font-size:22px;margin-bottom:20px;color:#8B4B35}
+.letter-content{line-height:1.7;font-size:15px;color:#444;margin-bottom:16px}
+.letter-sign{text-align:right;font-size:14px;color:#8B4B35}
+.nav{display:flex;justify-content:space-between;align-items:center;margin:20px 0}
+.title{font-size:20px;color:#8B4B35}
+.admin-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#f3f3f3;border:none;cursor:pointer}
+.admin-panel{background:#fff;border-radius:12px;padding:20px;margin-bottom:24px;display:none}
+.admin-panel.show{display:block}
+.form-item{margin-bottom:16px}
+.form-item label{display:block;margin-bottom:8px;font-size:14px;color:#666}
+input,textarea{width:100%;border:1px solid #e0e0e0;border-radius:8px;padding:12px;font-size:14px}
+button.btn{width:100%;background:#8B4B35;color:white;border:none;border-radius:8px;padding:14px;font-size:15px;margin-top:8px;cursor:pointer}
+.gift-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.gift-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
+.gift-img{width:100%;height:180px;object-fit:cover}
+.gift-info{padding:16px}
+.gift-name{font-size:16px;margin-bottom:8px}
+.tag{font-size:12px;background:#f3efe9;color:#8B4B35;padding:4px 8px;border-radius:10px;display:inline-block;margin-bottom:10px}
+.desc{font-size:14px;line-height:1.5;margin-bottom:10px;color:#555}
+.owners{font-size:12px;color:#777;margin-bottom:12px}
+.receive-btn{width:100%;padding:10px;border-radius:8px;border:none;background:#8B4B35;color:white;cursor:pointer}
+.receive-btn:disabled{background:#ccc}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;padding:20px;z-index:9}
+.modal.show{display:flex}
+.modal-card{background:#fff;border-radius:16px;padding:24px;max-width:360px;width:100%}
+.modal-title{font-size:18px;margin-bottom:16px;text-align:center;color:#8B4B35}
+.tip{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#8B4B35;color:white;padding:10px 18px;border-radius:20px;font-size:14px;opacity:0;transition:opacity 0.3s;z-index:99}
+.tip.show{opacity:1}
+.loading{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;z-index:999}
+</style>
 </head>
 <body>
 
-<div class="loading-overlay" id="loadingOverlay">正在连接云数据库...</div>
+<div class="loading" id="loading">加载中...</div>
 
 <div class="letter-box" id="letterBox">
-    <div class="letter-card">
-        <button class="letter-close" id="letterClose">×</button>
-        <h2 class="letter-title">致我亲爱的朋友们</h2>
-        <p class="letter-content" id="letterContent">
-            当我准备踏上新的旅程，想把这些承载着我们共同回忆的小物件分享给你。每一件物品都藏着一段时光、一次欢笑，或是一个让我们的日子更温暖的瞬间。<br><br>
-            这不是告别，只是想让我们的回忆一直相伴，即便我们走向不同的方向。谢谢你带来的快乐、支持，还有那些难忘的瞬间。心怀感恩，始终。
-        </p>
-        <p class="letter-sign">你的朋友 [我的名字]</p>
+  <div class="letter-card">
+    <button class="letter-close" id="letterClose">×</button>
+    <h2 class="letter-title">致我亲爱的朋友们</h2>
+    <div class="letter-content" id="letterContent">
+当我准备踏上新的旅程，想把这些承载着我们共同回忆的小物件分享给你。
+每一件物品都藏着一段时光、一次欢笑，或是一个让我们的日子更温暖的瞬间。
+
+这不是告别，只是想让我们的回忆一直相伴，即便我们走向不同的方向。
+谢谢你带来的快乐、支持，还有那些难忘的瞬间。心怀感恩，始终。
     </div>
+    <div class="letter-sign">—— 你的朋友</div>
+  </div>
 </div>
 
-<div class="nav-bar">
-    <h1 class="nav-title">“李”物领养站 🧡</h1>
-    <div class="admin-icon" id="adminIcon">⚙️</div>
+<div class="nav">
+  <div class="title">回忆礼物领养站 🧡</div>
+  <button class="admin-btn" id="adminBtn">⚙️</button>
 </div>
 
 <div class="admin-panel" id="adminPanel">
-    <div class="form-item">
-        <label class="form-title">✍️ 编辑欢迎信</label>
-        <textarea id="letterEdit" rows="6"></textarea>
-        <button class="btn" id="saveLetter">保存信件</button>
-    </div>
-    <div class="form-item">
-        <label class="form-title">📸 添加记忆物品</label>
-        <div class="upload-box" id="uploadBox">拖拽图片到此处，或点击添加</div>
-        <input type="file" id="fileInput" accept="image/*" style="display: none;">
-        <img class="preview-img" id="previewImg">
-        <input type="text" id="giftName" placeholder="物品名称">
-        <input type="number" id="giftStock" min="1" max="99" value="1" placeholder="可领取数量">
-        <textarea id="giftDesc" rows="4" placeholder="物品背后的故事"></textarea>
-        <button class="btn" id="addGift">添加记忆物品</button>
-    </div>
+  <div class="form-item">
+    <label>编辑欢迎信</label>
+    <textarea id="editLetter" rows="4"></textarea>
+    <button class="btn" id="saveLetter">保存信件</button>
+  </div>
+  <div class="form-item">
+    <label>添加回忆物品</label>
+    <input type="text" id="giftName" placeholder="物品名称">
+    <input type="number" id="giftStock" value="1" min="1" placeholder="可领取数量">
+    <textarea id="giftDesc" placeholder="物品描述"></textarea>
+    <input type="file" id="uploadImg" accept="image/*">
+    <button class="btn" id="addGift">添加物品</button>
+  </div>
 </div>
 
-<div class="gift-list" id="giftList"></div>
+<div class="gift-grid" id="giftList"></div>
 
-<div class="receive-modal" id="receiveModal">
-    <div class="receive-card">
-        <h3 class="receive-title">领取这份物品</h3>
-        <input type="text" id="nicknameInput" placeholder="请输入昵称" maxlength="10">
-        <button class="btn" id="confirmReceive">确认领取</button>
-    </div>
+<div class="modal" id="receiveModal">
+  <div class="modal-card">
+    <div class="modal-title">领取这份回忆</div>
+    <input type="text" id="nickname" placeholder="请输入你的昵称">
+    <button class="btn" id="confirmReceive">确认领取</button>
+  </div>
 </div>
 
-<div class="tip-box" id="tipBox"></div>
+<div class="tip" id="tip"></div>
 
 <script>
-    // 立即绑定关闭信件（永远可用）
-    document.getElementById('letterClose').onclick = function () {
-        document.getElementById('letterBox').style.display = 'none';
-        localStorage.setItem('hasReadLetter', 'true');
+let giftData = [];
+let currentId = null;
+let db = null;
+let cloud = null;
+
+const $ = id => document.getElementById(id);
+const showTip = (msg) => {
+  const t = $("tip");
+  t.innerText = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2000);
+};
+
+// 信件关闭（永远可用）
+$("letterClose").onclick = () => {
+  $("letterBox").style.display = "none";
+  localStorage.setItem("readLetter", "1");
+};
+
+// 管理员面板（点3次）
+let adminClick = 0;
+$("adminBtn").onclick = () => {
+  adminClick++;
+  if (adminClick === 3) {
+    $("adminPanel").classList.toggle("show");
+    adminClick = 0;
+  }
+};
+
+// 渲染物品
+function render() {
+  const list = $("giftList");
+  list.innerHTML = "";
+  if (!giftData.length) {
+    list.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999">暂无物品</div>`;
+    return;
+  }
+  giftData.forEach(g => {
+    const ok = g.claimed < g.stock;
+    const el = document.createElement("div");
+    el.className = "gift-card";
+    el.innerHTML = `
+      <img src="${g.img}" class="gift-img">
+      <div class="gift-info">
+        <div class="gift-name">${g.name}</div>
+        <div class="tag">${ok ? `可领 ${g.stock - g.claimed}` : '已领完'}</div>
+        <div class="desc">${g.desc}</div>
+        <div class="owners">${g.claimers?.map(n => `• ${n}`).join('<br>') || ''}</div>
+        <button class="receive-btn" ${ok ? '' : 'disabled'} data-id="${g._id}">${ok ? '领取' : '已领完'}</button>
+      </div>`;
+    list.appendChild(el);
+    el.querySelector(".receive-btn").onclick = () => {
+      currentId = g._id;
+      $("receiveModal").classList.add("show");
     };
+  });
+}
 
-    let giftData = [];
-    let clickNum = 0;
-    let clickTimer = null;
-    let currentGiftId = '';
-    let cloud = null;
-    let db = null;
+// 初始化云开发
+window.onload = async () => {
+  try {
+    if (localStorage.getItem("readLetter")) $("letterBox").style.display = "none";
 
-    // 等待页面完全加载 + SDK 加载完成
-    window.onload = async function () {
-        const loading = document.getElementById('loadingOverlay');
-        loading.classList.add('show');
+    if (typeof cloudbase === "undefined") throw new Error("云SDK加载异常");
 
-        try {
-            // 先判断 SDK 是否加载成功
-            if (typeof cloudbase === 'undefined') {
-                throw new Error("云SDK加载失败，请刷新重试");
-            }
+    cloud = new cloudbase.Cloud({ env: "gr1-3gwaj6dyccc835f1" });
+    await cloud.init();
 
-            // 初始化云开发
-            cloud = new cloudbase.Cloud({
-                env: "gr1-3gwaj6dyccc835f1"
-            });
+    const auth = cloud.auth();
+    if (!(await auth.getLoginState())) await auth.signInAnonymously();
 
-            await cloud.init();
+    db = cloud.database();
+    const { data } = await db.collection("gifts").get();
+    giftData = data;
+    render();
+    showTip("加载成功 ✨");
+  } catch (e) {
+    showTip("⚠️ " + e.message);
+  } finally {
+    $("loading").style.display = "none";
+  }
+};
 
-            // 匿名登录
-            const auth = cloud.auth();
-            const loginState = await auth.getLoginState();
-            if (!loginState) {
-                await auth.signInAnonymously();
-            }
+// 保存信件
+$("saveLetter").onclick = () => {
+  const v = $("editLetter").value.trim();
+  if (v) $("letterContent").innerText = v;
+  showTip("信件已保存");
+};
 
-            db = cloud.database();
-            const res = await db.collection('gifts').get();
-            giftData = res.data || [];
+// 添加物品
+$("addGift").onclick = async () => {
+  const name = $("giftName").value.trim();
+  const stock = +$("giftStock").value;
+  const desc = $("giftDesc").value.trim();
+  const file = $("uploadImg").files[0];
+  if (!name || !stock || !desc || !file) return showTip("请填写完整");
 
-            showTip("云数据库连接成功 ✨", "success");
-
-        } catch (e) {
-            showTip(`⚠️ 系统异常：${e.message}`, "error");
-            console.error(e);
-        } finally {
-            loading.classList.remove('show');
-        }
-
-        // 渲染页面
-        if (db) {
-            renderGifts();
-            document.getElementById('letterEdit').value = document.getElementById('letterContent').innerText;
-            if (localStorage.getItem('hasReadLetter') === 'true') {
-                document.getElementById('letterBox').style.display = 'none';
-            }
-            bindEvents();
-        }
-    };
-
-    function renderGifts() {
-        const list = document.getElementById('giftList');
-        list.innerHTML = '';
-        if (!giftData.length) {
-            list.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999">暂无物品</div>`;
-            return;
-        }
-        giftData.forEach(g => {
-            const ok = g.claimed < g.stock;
-            const card = document.createElement('div');
-            card.className = 'gift-card';
-            card.innerHTML = `
-                <img src="${g.img}" class="gift-img">
-                <div class="gift-info">
-                    <h3 class="gift-name">${g.name}</h3>
-                    <span class="stock-tag ${ok ? '' : 'stock-end'}">
-                        ${ok ? `可领取: ${g.stock - g.claimed}` : '已领完'}
-                    </span>
-                    <p class="gift-desc">${g.desc}</p>
-                    <div class="owner-list">
-                        ${g.claimers.map(n => `<div class="owner-item">• ${n}</div>`).join('')}
-                    </div>
-                    <button class="receive-btn" ${ok ? '' : 'disabled'} data-id="${g.id}">
-                        ${ok ? '领取这份物品' : '已被领取'}
-                    </button>
-                </div>`;
-            list.appendChild(card);
-            if (ok) {
-                card.querySelector('.receive-btn').onclick = function () {
-                    currentGiftId = this.dataset.id;
-                    document.getElementById('receiveModal').classList.add('show');
-                };
-            }
-        });
+  const reader = new FileReader();
+  reader.onload = async e => {
+    try {
+      const item = {
+        name, stock, desc,
+        img: e.target.result,
+        claimed: 0,
+        claimers: []
+      };
+      await db.collection("gifts").add({ data: item });
+      const { data } = await db.collection("gifts").get();
+      giftData = data;
+      render();
+      showTip("添加成功 ✅");
+    } catch (err) {
+      showTip("添加失败");
     }
+  };
+  reader.readAsDataURL(file);
+};
 
-    function bindEvents() {
-        // 管理员模式
-        document.getElementById('adminIcon').onclick = function () {
-            clickNum++;
-            clearTimeout(clickTimer);
-            clickTimer = setTimeout(() => clickNum = 0, 2000);
-            if (clickNum === 3) {
-                const p = document.getElementById('adminPanel');
-                p.classList.toggle('show');
-                showTip(p.classList.contains('show') ? '管理员已激活' : '管理员已关闭');
-                clickNum = 0;
-            }
-        };
+// 领取
+$("confirmReceive").onclick = async () => {
+  const nn = $("nickname").value.trim();
+  if (!nn) return showTip("请输入昵称");
+  const item = giftData.find(x => x._id === currentId);
+  if (!item || item.claimers?.includes(nn)) return showTip("已领取过");
 
-        // 保存信件
-        document.getElementById('saveLetter').onclick = function () {
-            const v = document.getElementById('letterEdit').value.trim();
-            if (v) {
-                document.getElementById('letterContent').innerText = v;
-                showTip('保存成功');
-            }
-        };
-
-        // 上传图片
-        document.getElementById('uploadBox').onclick = () => document.getElementById('fileInput').click();
-        document.getElementById('fileInput').onchange = function (e) {
-            const f = e.target.files[0];
-            if (!f || !f.type.startsWith('image/')) return;
-            const r = new FileReader();
-            r.onload = ev => {
-                const img = document.getElementById('previewImg');
-                img.src = ev.target.result;
-                img.style.display = 'block';
-            };
-            r.readAsDataURL(f);
-        };
-
-        // 添加物品
-        document.getElementById('addGift').onclick = async function () {
-            const name = document.getElementById('giftName').value.trim();
-            const stock = +document.getElementById('giftStock').value;
-            const desc = document.getElementById('giftDesc').value.trim();
-            const img = document.getElementById('previewImg').src;
-            if (!name || !desc || !img || !stock || stock < 1) {
-                showTip('请填写完整信息', 'error');
-                return;
-            }
-            this.disabled = true;
-            this.innerText = '添加中...';
-            try {
-                giftData.push({
-                    id: Date.now() + '',
-                    name, stock, desc, img,
-                    claimed: 0,
-                    claimers: []
-                });
-                await db.collection('gifts').set({ data: giftData });
-                renderGifts();
-                document.getElementById('giftName').value = '';
-                document.getElementById('giftStock').value = 1;
-                document.getElementById('giftDesc').value = '';
-                document.getElementById('previewImg').src = '';
-                document.getElementById('previewImg').style.display = 'none';
-                showTip('添加成功 ✅');
-            } catch (e) {
-                giftData.pop();
-                showTip('添加失败：' + e.message, 'error');
-            } finally {
-                this.disabled = false;
-                this.innerText = '添加记忆物品';
-            }
-        };
-
-        // 领取
-        document.getElementById('confirmReceive').onclick = async function () {
-            const nn = document.getElementById('nicknameInput').value.trim();
-            if (!nn) { showTip('请输入昵称', 'error'); return; }
-            const idx = giftData.findIndex(x => x.id === currentGiftId);
-            if (idx === -1 || giftData[idx].claimers.includes(nn)) {
-                showTip('已领取过或物品不存在', 'error');
-                return;
-            }
-            this.disabled = true;
-            this.innerText = '领取中...';
-            try {
-                giftData[idx].claimers.push(nn);
-                giftData[idx].claimed++;
-                await db.collection('gifts').set({ data: giftData });
-                renderGifts();
-                document.getElementById('receiveModal').classList.remove('show');
-                document.getElementById('nicknameInput').value = '';
-                showTip(`🎉 ${nn} 领取成功`);
-            } catch (e) {
-                giftData[idx].claimers.pop();
-                giftData[idx].claimed--;
-                showTip('领取失败：' + e.message, 'error');
-            } finally {
-                this.disabled = false;
-                this.innerText = '确认领取';
-            }
-        };
-    }
-
-    function showTip(msg, type = 'success') {
-        const t = document.getElementById('tipBox');
-        t.innerText = msg;
-        t.className = `tip-box ${type === 'error' ? 'error-tip' : ''}`;
-        t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 3000);
-    }
+  try {
+    item.claimers.push(nn);
+    item.claimed++;
+    await db.collection("gifts").doc(currentId).update({
+      data: { claimers: item.claimers, claimed: item.claimed }
+    });
+    $("receiveModal").classList.remove("show");
+    const { data } = await db.collection("gifts").get();
+    giftData = data;
+    render();
+    showTip(`🎉 ${nn} 领取成功`);
+  } catch (e) {
+    showTip("领取失败");
+  }
+};
 </script>
 </body>
 </html>
