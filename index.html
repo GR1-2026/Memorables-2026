@@ -11,37 +11,38 @@ body{background:#f7f3ee;color:#333;padding:16px;max-width:1000px;margin:0 auto}
 
 /* 欢迎信弹窗 */
 .letter-box{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
-.letter-card{background:#fff;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.08);padding:32px;max-width:500px;width:100%;position:relative}
-.letter-close{position:absolute;right:20px;top:20px;width:36px;height:36px;border-radius:50%;border:none;background:#f3f3f3;cursor:pointer;font-size:18px;color:#666}
+.letter-card{background:#fff;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.08);padding:32px;max-width:500px;width:100%}
+.letter-close{position:absolute;top:20px;right:20px;width:36px;height:36px;border-radius:50%;background:#f3f3f3;border:none;cursor:pointer;font-size:18px;color:#666}
 .letter-title{text-align:center;font-size:22px;margin-bottom:20px;color:#8B4B35}
 .letter-content{line-height:1.7;font-size:15px;color:#444;margin-bottom:16px}
-.letter-sign{text-align:right;font-size:14px;color:#8B4B35}
+.letter-sign{text-align:right;font-size:14px;color:#666}
 
 /* 导航栏 */
-.nav{display:flex;justify-content:space-between;align-items:center;margin:20px 0}
+.nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
 .title{font-size:20px;color:#8B4B35}
-.admin-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#f3f3f3;border:none;cursor:pointer}
+.admin-btn{width:36px;height:36px;border-radius:50%;background:#f3f3f3;border:none;cursor:pointer;font-size:18px;color:#666}
 
 /* 管理员面板 */
-.admin-panel{background:#fff;border-radius:12px;padding:20px;margin-bottom:24px;display:none}
+.admin-panel{background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.05);padding:20px;margin-bottom:24px;display:none}
 .admin-panel.show{display:block}
 .form-item{margin-bottom:16px}
 .form-item label{display:block;margin-bottom:8px;font-size:14px;color:#666}
-input,textarea{width:100%;border:1px solid #e0e0e0;border-radius:8px;padding:12px;font-size:14px;margin-bottom:8px}
+input,textarea{width:100%;border:1px solid #e0e0e0;border-radius:8px;padding:12px;font-size:14px;color:#333}
+textarea{min-height:80px;resize:vertical}
 button.btn{width:100%;background:#8B4B35;color:white;border:none;border-radius:8px;padding:14px;font-size:15px;cursor:pointer}
-button.btn:active{background:#7a3b2f}
+button.btn:active{background:#7a402d}
 
 /* 物品列表 */
 .gift-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
-.gift-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
+.gift-card{background:#fff;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.05);overflow:hidden}
 .gift-img{width:100%;height:180px;object-fit:cover}
 .gift-info{padding:16px}
-.gift-name{font-size:16px;margin-bottom:8px}
-.tag{font-size:12px;background:#f3efe9;color:#8B4B35;padding:4px 8px;border-radius:10px;display:inline-block;margin-bottom:10px}
-.desc{font-size:14px;line-height:1.5;margin-bottom:10px;color:#555}
-.owners{font-size:12px;color:#777;margin-bottom:12px}
-.receive-btn{width:100%;padding:10px;border-radius:8px;border:none;background:#8B4B35;color:white;cursor:pointer}
-.receive-btn:disabled{background:#ccc}
+.gift-name{font-size:16px;margin-bottom:8px;color:#333}
+.tag{display:inline-block;padding:4px 8px;background:#f7f3ee;border-radius:4px;font-size:12px;color:#8B4B35;margin-bottom:8px}
+.desc{font-size:14px;color:#666;line-height:1.5;margin-bottom:8px}
+.owners{font-size:12px;color:#999;margin-bottom:8px}
+.receive-btn{width:100%;background:#8B4B35;color:white;border:none;border-radius:8px;padding:10px;font-size:14px;cursor:pointer}
+.receive-btn:disabled{background:#ccc;cursor:not-allowed}
 
 /* 领取弹窗 */
 .modal{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;padding:20px;z-index:9}
@@ -50,7 +51,7 @@ button.btn:active{background:#7a3b2f}
 .modal-title{font-size:18px;margin-bottom:16px;text-align:center;color:#8B4B35}
 
 /* 提示框 */
-.tip{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#8B4B35;color:white;padding:10px 18px;border-radius:20px;font-size:14px;opacity:0;transition:opacity 0.3s;z-index:999}
+.tip{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:rgba(0,0,0,0.8);color:white;padding:10px 18px;border-radius:4px;font-size:14px;opacity:0;transition:opacity 0.3s;z-index:999}
 .tip.show{opacity:1}
 
 /* 云端状态标签 */
@@ -69,9 +70,11 @@ button.btn:active{background:#7a3b2f}
     <h2 class="letter-title">致我亲爱的朋友们</h2>
     <div class="letter-content" id="letterContent">
 当我准备踏上新的旅程，想把这些承载着我们共同回忆的小物件分享给你。
+
 每一件物品都藏着一段时光、一次欢笑，或是一个让我们温暖很久的瞬间。
 
 这不是告别，只是换一种方式，把回忆留给你。
+
 谢谢你来过，也谢谢你陪我走过。
     </div>
     <div class="letter-sign">—— 你的朋友</div>
@@ -107,7 +110,7 @@ button.btn:active{background:#7a3b2f}
 <!-- 领取弹窗 -->
 <div class="modal" id="receiveModal">
   <div class="modal-card">
-    <div class="modal-title">领取这份回忆</div>
+    <h3 class="modal-title">领取这份回忆</h3>
     <input type="text" id="nickname" placeholder="请输入你的昵称">
     <button class="btn" id="confirmReceive">确认领取</button>
   </div>
@@ -118,8 +121,8 @@ button.btn:active{background:#7a3b2f}
 
 <script>
 // ========== 核心配置（已匹配你的云开发环境） ==========
-const ENV_ID = "gr1-3gwaj6dyccc835f1"; // 你的云开发环境ID
-const FUNCTION_NAME = "gift"; // 你的云函数名称
+const ENV_ID = "gr1-3gwaj6dyccc835f1"; // 正确的环境ID
+const FUNCTION_NAME = "gift"; // 正确的云函数名
 const CLOUD_FUNC_URL = `https://${ENV_ID}.ap-shanghai.tcb-api.tencentcloudapi.com/web/${FUNCTION_NAME}`;
 
 // ========== 工具函数 ==========
@@ -134,33 +137,29 @@ function showTip(msg) {
   tip.timer = setTimeout(() => tip.classList.remove("show"), 3000);
 }
 
-// ========== 纯云端请求函数（无本地降级） ==========
+// 纯云端请求函数
 async function requestCloud(api, data = {}) {
   showTip("正在同步云端数据...");
   
   try {
-    // 发起云端请求
     const response = await fetch(CLOUD_FUNC_URL, {
       method: "POST",
       mode: "cors",
       credentials: "omit",
-      timeout: 15000, // 15秒超时
+      timeout: 15000,
       headers: {
         "Content-Type": "application/json",
-        "X-CloudBase-Env": ENV_ID // 显式指定环境ID
+        "X-CloudBase-Env": ENV_ID
       },
       body: JSON.stringify({ api, ...data })
     });
 
-    // 检查HTTP状态
     if (!response.ok) {
       throw new Error(`服务器返回错误：${response.status}`);
     }
 
-    // 解析响应
     const result = await response.json();
     
-    // 检查业务状态
     if (result.code !== 0) {
       throw new Error(result.msg || "云端处理失败");
     }
@@ -169,23 +168,23 @@ async function requestCloud(api, data = {}) {
   } catch (error) {
     showTip(`❌ 云端请求失败：${error.message}`);
     console.error("云端请求详情：", error);
-    throw error; // 抛出错误，让调用方处理
+    throw error;
   }
 }
 
 // ========== 全局状态 ==========
-let giftData = []; // 仅存储云端拉取的数据
+let giftData = [];
 let currentGiftId = null;
 let imgBase64 = "";
 
-// ========== 初始化：拉取云端数据 ==========
+// ========== 初始化 ==========
 async function init() {
   try {
     // 1. 拉取物品列表
     const listResult = await requestCloud("list");
     giftData = listResult.data || [];
     
-    // 2. 加载欢迎信（仅本地缓存文本，物品数据全存云端）
+    // 2. 加载欢迎信
     const savedLetter = localStorage.getItem("letterContent");
     if (savedLetter) {
       $("letterContent").innerText = savedLetter;
@@ -211,210 +210,4 @@ function renderGiftList() {
   const listEl = $("giftList");
   
   if (!giftData.length) {
-    listEl.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999">暂无回忆物品，点击⚙️添加吧～</div>`;
-    return;
-  }
-
-  listEl.innerHTML = giftData.map(gift => {
-    const remaining = (gift.stock || 1) - (gift.claimed || 0);
-    const canReceive = remaining > 0;
-    const receivers = gift.claimers?.join("、") || "暂无领取记录";
-    
-    return `
-    <div class="gift-card">
-      <img class="gift-img" src="${gift.img || 'https://picsum.photos/260/180?random=' + gift._id}">
-      <div class="gift-info">
-        <div class="gift-name">${gift.name}</div>
-        <span class="tag">剩余${remaining}份</span>
-        <div class="desc">${gift.desc || '暂无描述'}</div>
-        <div class="owners">领取记录：${receivers}</div>
-        <button class="receive-btn" ${canReceive ? '' : 'disabled'} onclick="openReceiveModal('${gift._id}')">
-          ${canReceive ? '领取这份回忆' : '已领完'}
-        </button>
-      </div>
-    </div>`;
-  }).join("");
-}
-
-// ========== 领取物品逻辑 ==========
-function openReceiveModal(giftId) {
-  currentGiftId = giftId;
-  $("nickname").value = "";
-  $("receiveModal").classList.add("show");
-}
-
-$("confirmReceive").onclick = async () => {
-  const nickname = $("nickname").value.trim();
-  if (!nickname) {
-    showTip("请输入你的昵称！");
-    return;
-  }
-
-  try {
-    // 1. 找到对应物品
-    const giftIndex = giftData.findIndex(g => g._id === currentGiftId);
-    if (giftIndex === -1) {
-      showTip("❌ 该物品不存在");
-      $("receiveModal").classList.remove("show");
-      return;
-    }
-    const targetGift = giftData[giftIndex];
-
-    // 2. 检查是否已领取
-    if (targetGift.claimers?.includes(nickname)) {
-      showTip("❌ 你已经领取过该物品啦");
-      return;
-    }
-
-    // 3. 检查库存
-    const remaining = (targetGift.stock || 1) - (targetGift.claimed || 0);
-    if (remaining <= 0) {
-      showTip("❌ 该物品已领完");
-      $("receiveModal").classList.remove("show");
-      return;
-    }
-
-    // 4. 调用云端领取接口
-    const updateResult = await requestCloud("update", {
-      id: currentGiftId,
-      claimers: [...(targetGift.claimers || []), nickname],
-      claimed: (targetGift.claimed || 0) + 1
-    });
-
-    // 5. 更新本地缓存并刷新
-    giftData[giftIndex].claimers = updateResult.data.claimers;
-    giftData[giftIndex].claimed = updateResult.data.claimed;
-    renderGiftList();
-
-    // 6. 反馈结果
-    showTip("✅ 领取成功！");
-    $("receiveModal").classList.remove("show");
-  } catch (error) {
-    showTip("❌ 领取失败，请重试");
-    console.error("领取错误：", error);
-  }
-};
-
-// ========== 管理员功能 ==========
-let adminClickCount = 0;
-$("adminBtn").onclick = () => {
-  adminClickCount++;
-  if (adminClickCount === 3) {
-    $("adminPanel").classList.toggle("show");
-    showTip($("adminPanel").classList.contains("show") ? "✅ 管理员模式已开启" : "❌ 管理员模式已关闭");
-    adminClickCount = 0;
-  }
-};
-
-// 保存欢迎信（仅本地缓存文本）
-$("saveLetter").onclick = () => {
-  const letterContent = $("editLetter").value.trim();
-  if (!letterContent) {
-    showTip("请输入欢迎信内容！");
-    return;
-  }
-  localStorage.setItem("letterContent", letterContent);
-  $("letterContent").innerText = letterContent;
-  showTip("✅ 欢迎信保存成功");
-};
-
-// 上传图片
-$("uploadImg").onchange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-
-  // 限制图片大小
-  if (file.size > 10 * 1024 * 1024) {
-    showTip("❌ 图片大小不能超过10MB");
-    return;
-  }
-
-  // 转换为Base64
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    imgBase64 = e.target.result;
-    showTip("✅ 图片上传成功");
-  };
-  reader.onerror = () => {
-    showTip("❌ 图片读取失败");
-  };
-  reader.readAsDataURL(file);
-};
-
-// ========== 添加物品（核心云端逻辑） ==========
-$("addGift").onclick = async () => {
-  // 1. 表单验证
-  const giftName = $("giftName").value.trim();
-  const giftStock = Number($("giftStock").value);
-  const giftDesc = $("giftDesc").value.trim();
-
-  if (!giftName) {
-    showTip("请输入物品名称！");
-    $("giftName").focus();
-    return;
-  }
-  
-  if (isNaN(giftStock) || giftStock < 1) {
-    showTip("请输入有效的数量（至少1）！");
-    $("giftStock").focus();
-    return;
-  }
-  
-  if (!giftDesc) {
-    showTip("请输入物品背后的故事！");
-    $("giftDesc").focus();
-    return;
-  }
-
-  try {
-    // 2. 构造物品数据
-    const newGift = {
-      name: giftName,
-      stock: giftStock,
-      desc: giftDesc,
-      img: imgBase64 || "",
-      claimers: [],
-      claimed: 0
-    };
-
-    // 3. 调用云端添加接口
-    const addResult = await requestCloud("add", newGift);
-
-    // 4. 更新列表并刷新
-    giftData.unshift(addResult.data); // 把新物品加到列表顶部
-    renderGiftList();
-
-    // 5. 清空表单
-    $("giftName").value = "";
-    $("giftStock").value = 1;
-    $("giftDesc").value = "";
-    $("uploadImg").value = "";
-    imgBase64 = "";
-
-    // 6. 反馈结果
-    showTip("✅ 物品添加到云端成功！");
-  } catch (error) {
-    showTip("❌ 添加失败，请重试");
-    console.error("添加物品错误：", error);
-  }
-};
-
-// ========== 关闭欢迎信 ==========
-$("letterClose").onclick = () => {
-  $("letterBox").style.display = "none";
-  localStorage.setItem("hasReadLetter", "1");
-  showTip("欢迎信已关闭");
-};
-
-// ========== 关闭领取弹窗（点击外部） ==========
-window.onclick = (e) => {
-  if (e.target === $("receiveModal")) {
-    $("receiveModal").classList.remove("show");
-  }
-};
-
-// ========== 启动程序 ==========
-init();
-</script>
-</body>
-</html>
+    listEl.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999">暂无回忆物品，点击⚙️添加吧～
