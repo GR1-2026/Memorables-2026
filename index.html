@@ -3,10 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Memorables-2026 🧡</title>
+    <title>Memorables 2026 🧡</title>
     <base href="./">
-    <!-- 引入云开发SDK -->
+
+    <!-- 云开发 SDK 提前加载，保证一定能读到 -->
     <script src="https://res.wx.qq.com/open/js/cloudbase/2.9.1/cloud.js"></script>
+
     <style>
         :root {
             --primary: #8B7355;
@@ -397,7 +399,7 @@
         }
 
         .error-tip {
-            background: #e53e3e; /* 红色错误提示 */
+            background: #e53e3e;
         }
 
         .loading-overlay {
@@ -424,376 +426,272 @@
                 grid-template-columns: 1fr;
                 gap: var(--spacing-sm);
             }
-
-            .letter-card {
-                padding: var(--spacing-md);
-            }
-
-            .nav-bar {
-                margin: var(--spacing-sm) 0;
-            }
-
-            .gift-img {
-                height: 180px;
-            }
-
-            .gift-info {
-                padding: var(--spacing-sm);
-            }
-
-            .gift-desc {
-                font-size: 15px;
-            }
+            .letter-card { padding: var(--spacing-md); }
+            .gift-img { height: 180px; }
+            .gift-info { padding: var(--spacing-sm); }
         }
     </style>
 </head>
 <body>
-    <!-- 加载遮罩层 -->
-    <div class="loading-overlay" id="loadingOverlay">
-        正在连接云数据库... 🧡
+
+<div class="loading-overlay" id="loadingOverlay">正在连接云数据库...</div>
+
+<div class="letter-box" id="letterBox">
+    <div class="letter-card">
+        <button class="letter-close" id="letterClose">×</button>
+        <h2 class="letter-title">致我亲爱的朋友们</h2>
+        <p class="letter-content" id="letterContent">
+            当我准备踏上新的旅程，想把这些承载着我们共同回忆的小物件分享给你。每一件物品都藏着一段时光、一次欢笑，或是一个让我们的日子更温暖的瞬间。<br><br>
+            这不是告别，只是想让我们的回忆一直相伴，即便我们走向不同的方向。谢谢你带来的快乐、支持，还有那些难忘的瞬间。心怀感恩，始终。
+        </p>
+        <p class="letter-sign">你的朋友 [我的名字]</p>
     </div>
+</div>
 
-    <div class="letter-box" id="letterBox">
-        <div class="letter-card">
-            <button class="letter-close" id="letterClose">×</button>
-            <h2 class="letter-title">致我亲爱的朋友们</h2>
-            <p class="letter-content" id="letterContent">
-                当我准备踏上新的旅程，想把这些承载着我们共同回忆的小物件分享给你。每一件物品都藏着一段时光、一次欢笑，或是一个让我们的日子更温暖的瞬间。<br><br>
-                这不是告别，只是想让我们的回忆一直相伴，即便我们走向不同的方向。谢谢你带来的快乐、支持，还有那些难忘的瞬间。心怀感恩，始终。
-            </p>
-            <p class="letter-sign">你的朋友 [我的名字]</p>
-        </div>
+<div class="nav-bar">
+    <h1 class="nav-title">“李”物领养站 🧡</h1>
+    <div class="admin-icon" id="adminIcon">⚙️</div>
+</div>
+
+<div class="admin-panel" id="adminPanel">
+    <div class="form-item">
+        <label class="form-title">✍️ 编辑欢迎信</label>
+        <textarea id="letterEdit" rows="6"></textarea>
+        <button class="btn" id="saveLetter">保存信件</button>
     </div>
-
-    <div class="nav-bar">
-        <h1 class="nav-title">“李”物领养站 🧡</h1>
-        <div class="admin-icon" id="adminIcon">⚙️</div>
+    <div class="form-item">
+        <label class="form-title">📸 添加记忆物品</label>
+        <div class="upload-box" id="uploadBox">拖拽图片到此处，或点击添加</div>
+        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+        <img class="preview-img" id="previewImg">
+        <input type="text" id="giftName" placeholder="物品名称">
+        <input type="number" id="giftStock" min="1" max="99" value="1" placeholder="可领取数量">
+        <textarea id="giftDesc" rows="4" placeholder="物品背后的故事"></textarea>
+        <button class="btn" id="addGift">添加记忆物品</button>
     </div>
+</div>
 
-    <div class="admin-panel" id="adminPanel">
-        <div class="form-item">
-            <label class="form-title">✍️ 编辑欢迎信</label>
-            <textarea id="letterEdit" rows="6"></textarea>
-            <button class="btn" id="saveLetter">保存信件</button>
-        </div>
-        <div class="form-item">
-            <label class="form-title">📸 添加记忆物品</label>
-            <div class="upload-box" id="uploadBox">拖拽图片到此处，或点击添加</div>
-            <input type="file" id="fileInput" accept="image/*" style="display: none;">
-            <img class="preview-img" id="previewImg">
-            <input type="text" id="giftName" placeholder="请输入物品名称（如：一起喝过的咖啡杯）">
-            <input type="number" id="giftStock" min="1" max="99" value="1" placeholder="可赠送数量（1-99）">
-            <textarea id="giftDesc" rows="4" placeholder="请分享这个物品背后的故事"></textarea>
-            <button class="btn" id="addGift">添加记忆物品</button>
-        </div>
+<div class="gift-list" id="giftList"></div>
+
+<div class="receive-modal" id="receiveModal">
+    <div class="receive-card">
+        <h3 class="receive-title">领取这份物品</h3>
+        <input type="text" id="nicknameInput" placeholder="请输入昵称" maxlength="10">
+        <button class="btn" id="confirmReceive">确认领取</button>
     </div>
+</div>
 
-    <div class="gift-list" id="giftList"></div>
+<div class="tip-box" id="tipBox"></div>
 
-    <div class="receive-modal" id="receiveModal">
-        <div class="receive-card">
-            <h3 class="receive-title">领取这份物品</h3>
-            <input type="text" id="nicknameInput" class="nickname-input" placeholder="请输入你的昵称（方便认领礼物）" maxlength="10">
-            <button class="btn" id="confirmReceive">确认领取</button>
-        </div>
-    </div>
+<script>
+    // 立即绑定关闭信件（永远可用）
+    document.getElementById('letterClose').onclick = function () {
+        document.getElementById('letterBox').style.display = 'none';
+        localStorage.setItem('hasReadLetter', 'true');
+    };
 
-    <div class="tip-box" id="tipBox"></div>
+    let giftData = [];
+    let clickNum = 0;
+    let clickTimer = null;
+    let currentGiftId = '';
+    let cloud = null;
+    let db = null;
 
-    <script>
-        let giftData = [];
-        let clickNum = 0;
-        let clickTimer = null;
-        let currentGiftId = '';
-        let cloud = null;
-        let db = null;
+    // 等待页面完全加载 + SDK 加载完成
+    window.onload = async function () {
+        const loading = document.getElementById('loadingOverlay');
+        loading.classList.add('show');
 
-        // 立即绑定关闭信件按钮（修复核心）
-        document.getElementById('letterClose').addEventListener('click', function() {
-            document.getElementById('letterBox').style.display = 'none';
-            localStorage.setItem('hasReadLetter', 'true');
-        });
-
-        // 页面加载完成后初始化
-        window.addEventListener('load', async function() {
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            loadingOverlay.classList.add('show');
-
-            try {
-                cloud = new cloudbase.Cloud({
-                    env: "gr1-3gwaj6dyccc835f1"
-                });
-
-                await cloud.init();
-                
-                const auth = cloud.auth();
-                const loginState = await auth.getLoginState();
-                if (!loginState) {
-                    const loginRes = await auth.signInAnonymously();
-                    if (!loginRes) throw new Error("匿名登录失败");
-                }
-
-                db = cloud.database();
-                if (!db) throw new Error("获取数据库实例失败");
-
-                const res = await db.collection('gifts').get();
-                giftData = res.data.length > 0 ? res.data : [];
-
-                showTip("云数据库连接成功 ✨", "success");
-
-            } catch (e) {
-                const errorMsg = `云数据库初始化失败：${e.message}
-请联系管理员检查：
-1. 云环境ID是否正确
-2. 匿名登录是否开启
-3. 域名白名单是否配置正确
-4. 网络是否正常`;
-                
-                showTip(errorMsg, "error");
-                disableAllButtons();
-                document.getElementById('giftList').innerHTML = `
-                    <div style="grid-column: 1/-1; text-align:center; padding:var(--spacing-lg); color:#e53e3e; line-height: 1.8;">
-                        <strong>⚠️ 系统异常</strong><br>
-                        云数据库连接失败，暂时无法使用<br>
-                        错误详情：${e.message.substring(0, 50)}...<br>
-                        请联系管理员解决后再使用
-                    </div>
-                `;
-                console.error("云初始化详细错误：", e);
-            } finally {
-                loadingOverlay.classList.remove('show');
+        try {
+            // 先判断 SDK 是否加载成功
+            if (typeof cloudbase === 'undefined') {
+                throw new Error("云SDK加载失败，请刷新重试");
             }
 
-            if (db) {
-                renderGifts();
-                const letterContent = document.getElementById('letterContent').innerText;
-                document.getElementById('letterEdit').value = letterContent;
-                if (localStorage.getItem('hasReadLetter') === 'true') {
-                    document.getElementById('letterBox').style.display = 'none';
-                }
-                bindAllEvents();
+            // 初始化云开发
+            cloud = new cloudbase.Cloud({
+                env: "gr1-3gwaj6dyccc835f1"
+            });
+
+            await cloud.init();
+
+            // 匿名登录
+            const auth = cloud.auth();
+            const loginState = await auth.getLoginState();
+            if (!loginState) {
+                await auth.signInAnonymously();
+            }
+
+            db = cloud.database();
+            const res = await db.collection('gifts').get();
+            giftData = res.data || [];
+
+            showTip("云数据库连接成功 ✨", "success");
+
+        } catch (e) {
+            showTip(`⚠️ 系统异常：${e.message}`, "error");
+            console.error(e);
+        } finally {
+            loading.classList.remove('show');
+        }
+
+        // 渲染页面
+        if (db) {
+            renderGifts();
+            document.getElementById('letterEdit').value = document.getElementById('letterContent').innerText;
+            if (localStorage.getItem('hasReadLetter') === 'true') {
+                document.getElementById('letterBox').style.display = 'none';
+            }
+            bindEvents();
+        }
+    };
+
+    function renderGifts() {
+        const list = document.getElementById('giftList');
+        list.innerHTML = '';
+        if (!giftData.length) {
+            list.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;color:#999">暂无物品</div>`;
+            return;
+        }
+        giftData.forEach(g => {
+            const ok = g.claimed < g.stock;
+            const card = document.createElement('div');
+            card.className = 'gift-card';
+            card.innerHTML = `
+                <img src="${g.img}" class="gift-img">
+                <div class="gift-info">
+                    <h3 class="gift-name">${g.name}</h3>
+                    <span class="stock-tag ${ok ? '' : 'stock-end'}">
+                        ${ok ? `可领取: ${g.stock - g.claimed}` : '已领完'}
+                    </span>
+                    <p class="gift-desc">${g.desc}</p>
+                    <div class="owner-list">
+                        ${g.claimers.map(n => `<div class="owner-item">• ${n}</div>`).join('')}
+                    </div>
+                    <button class="receive-btn" ${ok ? '' : 'disabled'} data-id="${g.id}">
+                        ${ok ? '领取这份物品' : '已被领取'}
+                    </button>
+                </div>`;
+            list.appendChild(card);
+            if (ok) {
+                card.querySelector('.receive-btn').onclick = function () {
+                    currentGiftId = this.dataset.id;
+                    document.getElementById('receiveModal').classList.add('show');
+                };
             }
         });
+    }
 
-        // 渲染礼物列表
-        function renderGifts() {
-            const giftList = document.getElementById('giftList');
-            giftList.innerHTML = '';
+    function bindEvents() {
+        // 管理员模式
+        document.getElementById('adminIcon').onclick = function () {
+            clickNum++;
+            clearTimeout(clickTimer);
+            clickTimer = setTimeout(() => clickNum = 0, 2000);
+            if (clickNum === 3) {
+                const p = document.getElementById('adminPanel');
+                p.classList.toggle('show');
+                showTip(p.classList.contains('show') ? '管理员已激活' : '管理员已关闭');
+                clickNum = 0;
+            }
+        };
 
-            if (giftData.length === 0) {
-                giftList.innerHTML = `
-                    <div style="grid-column: 1/-1; text-align:center; padding:var(--spacing-lg); color:var(--text-light);">
-                        还没有添加记忆物品哦～添加一些和朋友们分享吧！ 🎁
-                    </div>
-                `;
+        // 保存信件
+        document.getElementById('saveLetter').onclick = function () {
+            const v = document.getElementById('letterEdit').value.trim();
+            if (v) {
+                document.getElementById('letterContent').innerText = v;
+                showTip('保存成功');
+            }
+        };
+
+        // 上传图片
+        document.getElementById('uploadBox').onclick = () => document.getElementById('fileInput').click();
+        document.getElementById('fileInput').onchange = function (e) {
+            const f = e.target.files[0];
+            if (!f || !f.type.startsWith('image/')) return;
+            const r = new FileReader();
+            r.onload = ev => {
+                const img = document.getElementById('previewImg');
+                img.src = ev.target.result;
+                img.style.display = 'block';
+            };
+            r.readAsDataURL(f);
+        };
+
+        // 添加物品
+        document.getElementById('addGift').onclick = async function () {
+            const name = document.getElementById('giftName').value.trim();
+            const stock = +document.getElementById('giftStock').value;
+            const desc = document.getElementById('giftDesc').value.trim();
+            const img = document.getElementById('previewImg').src;
+            if (!name || !desc || !img || !stock || stock < 1) {
+                showTip('请填写完整信息', 'error');
                 return;
             }
+            this.disabled = true;
+            this.innerText = '添加中...';
+            try {
+                giftData.push({
+                    id: Date.now() + '',
+                    name, stock, desc, img,
+                    claimed: 0,
+                    claimers: []
+                });
+                await db.collection('gifts').set({ data: giftData });
+                renderGifts();
+                document.getElementById('giftName').value = '';
+                document.getElementById('giftStock').value = 1;
+                document.getElementById('giftDesc').value = '';
+                document.getElementById('previewImg').src = '';
+                document.getElementById('previewImg').style.display = 'none';
+                showTip('添加成功 ✅');
+            } catch (e) {
+                giftData.pop();
+                showTip('添加失败：' + e.message, 'error');
+            } finally {
+                this.disabled = false;
+                this.innerText = '添加记忆物品';
+            }
+        };
 
-            giftData.forEach(gift => {
-                const isAvailable = gift.claimed < gift.stock;
-                const card = document.createElement('div');
-                card.className = 'gift-card';
-                
-                let ownerHtml = '';
-                if (gift.claimers.length > 0) {
-                    ownerHtml = `<div class="owner-list">
-                        <strong>新主人：</strong><br>
-                        ${gift.claimers.map(name => `<div class="owner-item">• ${name}</div>`).join('')}
-                    </div>`;
-                }
+        // 领取
+        document.getElementById('confirmReceive').onclick = async function () {
+            const nn = document.getElementById('nicknameInput').value.trim();
+            if (!nn) { showTip('请输入昵称', 'error'); return; }
+            const idx = giftData.findIndex(x => x.id === currentGiftId);
+            if (idx === -1 || giftData[idx].claimers.includes(nn)) {
+                showTip('已领取过或物品不存在', 'error');
+                return;
+            }
+            this.disabled = true;
+            this.innerText = '领取中...';
+            try {
+                giftData[idx].claimers.push(nn);
+                giftData[idx].claimed++;
+                await db.collection('gifts').set({ data: giftData });
+                renderGifts();
+                document.getElementById('receiveModal').classList.remove('show');
+                document.getElementById('nicknameInput').value = '';
+                showTip(`🎉 ${nn} 领取成功`);
+            } catch (e) {
+                giftData[idx].claimers.pop();
+                giftData[idx].claimed--;
+                showTip('领取失败：' + e.message, 'error');
+            } finally {
+                this.disabled = false;
+                this.innerText = '确认领取';
+            }
+        };
+    }
 
-                card.innerHTML = `
-                    <img src="${gift.img}" class="gift-img">
-                    <div class="gift-info">
-                        <h3 class="gift-name">${gift.name}</h3>
-                        <span class="stock-tag ${!isAvailable ? 'stock-end' : ''}">
-                            ${isAvailable ? `可领取: ${gift.stock - gift.claimed} 🧡` : '已领取完毕 💛'}
-                        </span>
-                        <p class="gift-desc">${gift.desc}</p>
-                        ${ownerHtml}
-                        <button class="receive-btn" ${!isAvailable ? 'disabled' : ''} data-id="${gift.id}">
-                            ${isAvailable ? '领取这份物品' : '已被领取'}
-                        </button>
-                    </div>
-                `;
-                giftList.appendChild(card);
-
-                if (isAvailable) {
-                    card.querySelector('.receive-btn').addEventListener('click', function() {
-                        currentGiftId = this.dataset.id;
-                        document.getElementById('receiveModal').classList.add('show');
-                        document.getElementById('nicknameInput').focus();
-                    });
-                }
-            });
-        }
-
-        // 绑定交互事件
-        function bindAllEvents() {
-            // 管理员模式
-            document.getElementById('adminIcon').addEventListener('click', function() {
-                clickNum++;
-                clearTimeout(clickTimer);
-                clickTimer = setTimeout(() => { clickNum = 0; }, 2000);
-                
-                if (clickNum === 3) {
-                    const adminPanel = document.getElementById('adminPanel');
-                    adminPanel.classList.toggle('show');
-                    showTip(adminPanel.classList.contains('show') ? '管理员模式已激活 ✨' : '管理员模式已关闭', "success");
-                    clickNum = 0;
-                }
-            });
-
-            // 保存欢迎信
-            document.getElementById('saveLetter').addEventListener('click', function() {
-                const newLetter = document.getElementById('letterEdit').value.trim();
-                if (newLetter) {
-                    document.getElementById('letterContent').innerText = newLetter;
-                    showTip('信件保存成功 💛', "success");
-                } else {
-                    showTip('请输入信件内容！', "error");
-                }
-            });
-
-            // 上传图片
-            document.getElementById('uploadBox').addEventListener('click', function() {
-                document.getElementById('fileInput').click();
-            });
-
-            document.getElementById('fileInput').addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file && file.type.startsWith('image/')) {
-                    const reader = new FileReader();
-                    reader.onload = function(event) {
-                        document.getElementById('previewImg').src = event.target.result;
-                        document.getElementById('previewImg').style.display = 'block';
-                    };
-                    reader.readAsDataURL(file);
-                } else {
-                    showTip('请上传图片文件！', "error");
-                }
-            });
-
-            // 添加物品
-            document.getElementById('addGift').addEventListener('click', async function() {
-                const name = document.getElementById('giftName').value.trim();
-                const stock = parseInt(document.getElementById('giftStock').value);
-                const desc = document.getElementById('giftDesc').value.trim();
-                const imgSrc = document.getElementById('previewImg').src;
-
-                if (!name || !desc || !imgSrc) {
-                    showTip('请填写所有信息并上传图片！', "error");
-                    return;
-                }
-                if (isNaN(stock) || stock < 1 || stock > 99) {
-                    showTip('数量必须在1-99之间！', "error");
-                    return;
-                }
-
-                this.disabled = true;
-                this.innerText = "添加中...";
-
-                try {
-                    const newGift = {
-                        id: Date.now().toString(),
-                        name: name,
-                        stock: stock,
-                        desc: desc,
-                        img: imgSrc,
-                        claimed: 0,
-                        claimers: []
-                    };
-                    giftData.push(newGift);
-                    
-                    await db.collection('gifts').set({ data: giftData });
-                    
-                    renderGifts();
-                    document.getElementById('giftName').value = '';
-                    document.getElementById('giftStock').value = 1;
-                    document.getElementById('giftDesc').value = '';
-                    document.getElementById('previewImg').src = '';
-                    document.getElementById('previewImg').style.display = 'none';
-                    document.getElementById('fileInput').value = '';
-                    
-                    showTip('物品添加成功并同步到云端 🎉', "success");
-                } catch (e) {
-                    giftData.pop();
-                    showTip(`添加失败：${e.message}（请联系管理员）`, "error");
-                    console.error("添加物品同步错误：", e);
-                } finally {
-                    this.disabled = false;
-                    this.innerText = "添加记忆物品";
-                }
-            });
-
-            // 确认领取
-            document.getElementById('confirmReceive').addEventListener('click', async function() {
-                const nickname = document.getElementById('nicknameInput').value.trim();
-                if (!nickname) {
-                    showTip('请输入你的昵称！', "error");
-                    return;
-                }
-
-                const index = giftData.findIndex(g => g.id === currentGiftId);
-                if (index === -1) {
-                    showTip('物品不存在！', "error");
-                    return;
-                }
-
-                if (giftData[index].claimers.includes(nickname)) {
-                    showTip('你已经领取过这个物品啦！', "error");
-                    return;
-                }
-
-                this.disabled = true;
-                this.innerText = "领取中...";
-
-                try {
-                    giftData[index].claimers.push(nickname);
-                    giftData[index].claimed++;
-                    
-                    await db.collection('gifts').set({ data: giftData });
-                    
-                    renderGifts();
-                    document.getElementById('receiveModal').classList.remove('show');
-                    document.getElementById('nicknameInput').value = '';
-                    showTip(`🎉 ${nickname}，你已成功领取这份物品！`, "success");
-                } catch (e) {
-                    giftData[index].claimers.pop();
-                    giftData[index].claimed--;
-                    showTip(`领取失败：${e.message}（请联系管理员）`, "error");
-                    console.error("领取同步错误：", e);
-                } finally {
-                    this.disabled = false;
-                    this.innerText = "确认领取";
-                }
-            });
-        }
-
-        // 禁用按钮
-        function disableAllButtons() {
-            const allBtns = document.querySelectorAll('.btn, .receive-btn, .admin-icon, .upload-box');
-            allBtns.forEach(btn => {
-                if (btn.tagName === 'BUTTON') {
-                    btn.disabled = true;
-                } else {
-                    btn.style.pointerEvents = 'none';
-                    btn.style.opacity = '0.5';
-                }
-            });
-        }
-
-        // 提示
-        function showTip(msg, type = "success") {
-            const tipBox = document.getElementById('tipBox');
-            tipBox.innerText = msg;
-            tipBox.className = `tip-box ${type === "error" ? "error-tip" : ""}`;
-            tipBox.classList.add('show');
-            setTimeout(() => {
-                tipBox.classList.remove('show');
-                tipBox.className = "tip-box";
-            }, type === "error" ? 5000 : 3000);
-        }
-    </script>
+    function showTip(msg, type = 'success') {
+        const t = document.getElementById('tipBox');
+        t.innerText = msg;
+        t.className = `tip-box ${type === 'error' ? 'error-tip' : ''}`;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+    }
+</script>
 </body>
 </html>
