@@ -3,9 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>回忆礼物领养站 - 多CDN修复版球球了</title>
-<!-- 多个CDN备用，按顺序尝试 -->
-<script src="https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@2.6.1/dist/cloudbase.full.js"></script>
+<title>回忆礼物领养站 - 官方CDN修复版</title>
+<!-- 使用腾讯云官方CDN，latest表示最新版本 -->
+<script src="https://static.cloudbase.net/cloudbase-js-sdk/latest/cloudbase.full.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{padding:20px;background:#f7f3ee;font-family:Arial;max-width:800px;margin:0 auto;}
@@ -51,15 +51,6 @@ const ENV_ID = "gr1-3gwaj6dyccc835f1";
 // 核心变量
 let cloudApp = null;
 let isInitialized = false;
-let sdkLoadAttempts = 0;
-const maxSdkLoadAttempts = 3;
-
-// 多个备用的CDN地址
-const sdkCDNs = [
-  'https://cdn.jsdelivr.net/npm/@cloudbase/js-sdk@2.6.1/dist/cloudbase.full.js',
-  'https://unpkg.com/@cloudbase/js-sdk@2.6.1/dist/cloudbase.full.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/cloudbase-js-sdk/2.6.1/cloudbase.full.js'
-];
 
 // 工具函数：显示提示
 function showTip(msg, isSuccess) {
@@ -69,35 +60,6 @@ function showTip(msg, isSuccess) {
   setTimeout(() => {
     tipEl.className = 'tip';
   }, 3000);
-}
-
-// 动态加载SDK
-function loadSDK(cdnIndex = 0) {
-  if (cdnIndex >= sdkCDNs.length) {
-    showTip("所有CDN都加载失败，请检查网络连接", false);
-    document.getElementById('giftList').innerHTML = '<div class="item">SDK加载失败，请刷新页面重试</div>';
-    return;
-  }
-  
-  sdkLoadAttempts++;
-  console.log(`尝试加载SDK (${sdkLoadAttempts}/${maxSdkLoadAttempts}): ${sdkCDNs[cdnIndex]}`);
-  
-  const script = document.createElement('script');
-  script.src = sdkCDNs[cdnIndex];
-  script.onload = function() {
-    console.log("SDK加载成功，开始初始化...");
-    initCloudBase();
-  };
-  script.onerror = function() {
-    console.log(`CDN ${cdnIndex} 加载失败，尝试下一个...`);
-    if (sdkLoadAttempts < maxSdkLoadAttempts) {
-      loadSDK(cdnIndex + 1);
-    } else {
-      showTip("SDK加载失败，请检查网络连接", false);
-      document.getElementById('giftList').innerHTML = '<div class="item">SDK加载失败，请刷新页面重试或联系管理员</div>';
-    }
-  };
-  document.head.appendChild(script);
 }
 
 // 加载物品列表
@@ -226,38 +188,70 @@ window.addEventListener('DOMContentLoaded', function() {
     console.log("SDK已通过script标签加载，开始初始化...");
     initCloudBase();
   } else {
-    console.log("SDK未加载，开始动态加载...");
-    document.getElementById('giftList').innerHTML = '<div class="loading">正在加载SDK...</div>';
+    console.log("SDK未加载，等待加载...");
+    document.getElementById('giftList').innerHTML = '<div class="loading">正在加载云开发SDK...</div>';
     
     // 设置超时检查
     setTimeout(function() {
       if (!window.cloudbase) {
-        console.log("script标签加载SDK失败，开始动态加载备用CDN...");
-        loadSDK(0);
+        console.log("script标签加载SDK失败，尝试备用方案...");
+        tryAlternativeCDN();
       }
-    }, 2000);
+    }, 3000);
   }
 });
 
-// 添加手动重试按钮
-function addRetryButton() {
-  const giftList = document.getElementById('giftList');
-  giftList.innerHTML = `
-    <div class="item">
-      <h4>SDK加载失败</h4>
-      <p>无法连接云开发服务，请检查：</p>
-      <ol style="margin: 10px 0; padding-left: 20px;">
-        <li>网络连接是否正常</li>
-        <li>浏览器是否允许运行JavaScript</li>
-        <li>是否在安全网络环境中</li>
-      </ol>
-      <button id="retryBtn" style="background: #4CAF50; margin-top: 10px;">重试连接</button>
-    </div>
-  `;
+// 备用CDN方案
+function tryAlternativeCDN() {
+  console.log("尝试备用CDN方案...");
+  document.getElementById('giftList').innerHTML = '<div class="loading">正在尝试备用CDN...</div>';
   
-  document.getElementById('retryBtn').addEventListener('click', function() {
-    location.reload();
-  });
+  // 备用CDN列表（腾讯云官方CDN）
+  const alternativeCDNs = [
+    'https://static.cloudbase.net/cloudbase-js-sdk/2.5.0/cloudbase.full.js', // 使用具体版本号
+    'https://static.cloudbase.net/cloudbase-js-sdk/2.4.0/cloudbase.full.js',
+    'https://static.cloudbase.net/cloudbase-js-sdk/2.3.0/cloudbase.full.js'
+  ];
+  
+  let currentIndex = 0;
+  
+  function loadNextCDN() {
+    if (currentIndex >= alternativeCDNs.length) {
+      // 所有CDN都失败
+      showTip("所有CDN都加载失败，请检查网络连接", false);
+      document.getElementById('giftList').innerHTML = `
+        <div class="item">
+          <h4>SDK加载失败</h4>
+          <p>无法连接云开发服务，请尝试：</p>
+          <ol style="margin: 10px 0; padding-left: 20px;">
+            <li>检查网络连接</li>
+            <li>刷新页面重试</li>
+            <li>联系管理员检查环境配置</li>
+          </ol>
+          <button onclick="location.reload()" style="background: #4CAF50; margin-top: 10px;">刷新页面</button>
+        </div>
+      `;
+      return;
+    }
+    
+    const cdnUrl = alternativeCDNs[currentIndex];
+    console.log(`尝试加载CDN: ${cdnUrl}`);
+    
+    const script = document.createElement('script');
+    script.src = cdnUrl;
+    script.onload = function() {
+      console.log("备用CDN加载成功，开始初始化...");
+      initCloudBase();
+    };
+    script.onerror = function() {
+      console.log(`CDN ${currentIndex} 加载失败`);
+      currentIndex++;
+      setTimeout(loadNextCDN, 1000);
+    };
+    document.head.appendChild(script);
+  }
+  
+  loadNextCDN();
 }
 
 // 检查SDK是否可用
