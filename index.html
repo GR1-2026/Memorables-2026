@@ -101,6 +101,11 @@ button.btn:active{background:#7a3b2f}
 const GIFT_FUNC_URL = "https://gr1-3gwaj6dyccc835f1-1412377543.ap-shanghai.app.tcloudbase.com/gift";
 const UPLOAD_URL = "https://gr1-3gwaj6dyccc835f1-1412377543.ap-shanghai.app.tcloudbase.com/upload";
 
+// ==================== 状态管理 ====================
+let allGifts = []; // 存储所有物品
+let currentGiftId = null; // 当前领取的物品ID
+let currentImageUrl = ""; // 当前上传的图片URL
+
 // ==================== 工具函数 ====================
 const $ = id => document.getElementById(id);
 
@@ -145,48 +150,8 @@ async function callAPI(api, data = {}) {
   }
 }
 
-// ==================== 状态管理 ====================
-let allGifts = []; // 存储所有物品数据
-let currentGiftId = null; // 当前领取的物品ID
-let uploadedImageUrl = ""; // 当前上传的图片URL
-
-// ==================== 欢迎信管理 ====================
-$("saveLetter").onclick = () => {
-  const content = $("editLetter").value.trim();
-  if (!content) {
-    showTip("请输入信件内容！");
-    return;
-  }
-  localStorage.setItem("letterContent", content);
-  $("letterContent").innerText = content;
-  showTip("信件保存成功 ✨");
-};
-
-$("letterClose").onclick = () => {
-  $("letterBox").style.display = "none";
-  localStorage.setItem("hasReadLetter", "1");
-  showTip("欢迎信已关闭");
-};
-
-// ==================== 图片上传处理 ====================
-$("uploadImg").onchange = async (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  
-  console.log("选择的文件:", file.name, "大小:", file.size, "类型:", file.type);
-  
-  if (!file.type.startsWith('image/')) {
-    showTip("请选择图片文件！");
-    $("uploadImg").value = "";
-    return;
-  }
-  
-  if (file.size > 2 * 1024 * 1024) {
-    showTip("图片大小不能超过2MB");
-    $("uploadImg").value = "";
-    return;
-  }
-  
+// ==================== 图片上传函数 ====================
+async function uploadImage(file) {
   try {
     showTip("正在上传图片...");
     
@@ -213,38 +178,172 @@ $("uploadImg").onchange = async (e) => {
       throw new Error(result.msg || '上传失败');
     }
     
-    // 提取图片URL
-    const imageUrl = result.data?.url;
+    // 【关键修复】确保提取正确的图片URL
+    let imageUrl = "";
+    
+    // 尝试从result.data.url获取
+    if (result.data && result.data.url) {
+      imageUrl = result.data.url;
+    }
+    // 如果上面是空的，尝试从result.url获取
+    else if (result.url) {
+      imageUrl = result.url;
+    }
+    
     console.log("提取的图片URL:", imageUrl);
     
     if (!imageUrl) {
+      console.error("无法提取图片URL，完整响应:", result);
       throw new Error('服务器未返回图片URL');
     }
     
-    // 保存到变量
-    uploadedImageUrl = imageUrl;
-    console.log("uploadedImageUrl已设置为:", uploadedImageUrl);
+    // 【验证URL格式】
+    if (!imageUrl.startsWith('http')) {
+      console.warn("图片URL格式不正确，尝试修复:", imageUrl);
+      // 如果是相对路径，尝试添加完整域名
+      if (imageUrl.startsWith('/')) {
+        imageUrl = `https://6772-gr1-3gwaj6dyccc835f1-1412377543.tcb.qcloud.la${imageUrl}`;
+        console.log("修复后的URL:", imageUrl);
+      }
+    }
+    
     showTip("图片上传成功 ✨");
+    return imageUrl;
     
   } catch (error) {
     console.error("上传失败:", error);
-    showTip(`图片上传失败: ${error.message}`);
-    uploadedImageUrl = "";
+    throw new Error(`图片上传失败: ${error.message}`);
+  }
+}
+
+// ==================== 页面功能 ====================
+// 1. 欢迎信管理
+$("saveLetter").onclick = () => {
+  const content = $("editLetter").value.trim();
+  if (!content) {
+    showTip("请输入信件内容！");
+    return;
+  }
+  localStorage.setItem("letterContent", content);
+  $("letterContent").innerText = content;
+  showTip("信件保存成功 ✨");
+};
+
+$("letterClose").onclick = () => {
+  $("letterBox").style.display = "none";
+  localStorage.setItem("hasReadLetter", "1");
+  showTip("欢迎信已关闭");
+};
+
+// 2. 图片上传处理
+$("uploadImg").onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  console.log("选择的文件:", file.name, "大小:", file.size, "类型:", file.type);
+  
+  if (!file.type.startsWith('image/')) {
+    showTip("请选择图片文件！");
+    $("uploadImg").value = "";
+    return;
+  }
+  
+  if (file.size > 2 * 1024 * 1024) {
+    showTip("图片大小不能超过2MB");
+    $("uploadImg").value = "";
+    return;
+  }
+  
+  try {
+    const imageUrl = await uploadImage(file);
+    currentImageUrl = imageUrl;
+    console.log("currentImageUrl已设置为:", currentImageUrl);
+  } catch (error) {
+    showTip(error.message);
+    currentImageUrl = "";
     $("uploadImg").value = "";
   }
 };
 
-// ==================== 物品列表管理 ====================
+// 3. 添加物品功能
+$("addGift").onclick = async () => {
+  const name = $("giftName").value.trim();
+  const stock = parseInt($("giftStock").value);
+  const desc = $("giftDesc").value.trim();
+  
+  if (!name) {
+    showTip("请输入物品名称！");
+    $("giftName").focus();
+    return;
+  }
+  
+  if (isNaN(stock) || stock < 1) {
+    showTip("请输入有效的数量（至少1）！");
+    $("giftStock").focus();
+    return;
+  }
+  
+  if (!desc) {
+    showTip("请输入物品背后的故事！");
+    $("giftDesc").focus();
+    return;
+  }
+  
+  // 【关键】构建物品数据
+  const giftData = {
+    name, 
+    stock, 
+    desc,
+    img: currentImageUrl || "",
+    claimers: [], 
+    claimed: 0
+  };
+  
+  console.log("添加物品，数据:", giftData);
+  console.log("图片URL长度:", giftData.img ? giftData.img.length : 0);
+  console.log("图片URL是否以http开头:", giftData.img ? giftData.img.startsWith('http') : false);
+  
+  const res = await callAPI("add", giftData);
+  
+  if (res.code === 0) {
+    showTip("物品添加成功 ✨");
+    
+    // 清空表单
+    $("giftName").value = "";
+    $("giftStock").value = 1;
+    $("giftDesc").value = "";
+    $("uploadImg").value = "";
+    currentImageUrl = "";
+    
+    // 重新加载列表
+    await loadGiftList();
+  } else {
+    showTip(`添加失败: ${res.msg}`);
+  }
+};
+
+// 4. 加载和显示物品列表
 async function loadGiftList() {
   const res = await callAPI("list");
   if (res.code === 0) {
     allGifts = res.data;
+    console.log(`加载了 ${allGifts.length} 个物品`);
+    
+    // 检查最后一个物品的数据
+    if (allGifts.length > 0) {
+      const latest = allGifts[allGifts.length - 1];
+      console.log("最新物品数据:", latest);
+      console.log("最新物品图片URL:", latest.img);
+      console.log("最新物品图片URL类型:", typeof latest.img);
+    }
+    
     renderGiftList();
   } else {
     $("giftList").innerHTML = `<div class="empty-state">加载失败，请刷新页面重试</div>`;
   }
 }
 
+// 【关键修复】渲染物品列表
 function renderGiftList() {
   const container = $("giftList");
   
@@ -257,19 +356,43 @@ function renderGiftList() {
     return;
   }
   
-  container.innerHTML = allGifts.map(g => {
+  container.innerHTML = allGifts.map((g, index) => {
     const left = (g.stock || 1) - (g.claimed || 0);
     const canGet = left > 0;
     const claimers = g.claimers || [];
     const has = claimers.length > 0 ? claimers.join("、") : "暂无领取记录";
     const latestOwner = claimers.length > 0 ? claimers[claimers.length - 1] : null;
     
-    // 图片显示逻辑
-    let imgHtml = '<div class="gift-img"></div>'; // 默认显示空白
+    // 【核心修复】图片显示逻辑
+    let imgHtml = "";
     
-    // 如果有图片URL且以http开头，才显示图片
-    if (g.img && g.img.startsWith('http')) {
-      imgHtml = `<img class="gift-img" src="${g.img}" alt="${g.name}">`;
+    // 检查是否有有效的图片URL
+    if (g.img && typeof g.img === 'string' && g.img.trim().length > 0) {
+      // 如果URL不以http开头，尝试修复
+      let imgUrl = g.img;
+      if (!imgUrl.startsWith('http')) {
+        console.warn(`物品 ${g.name} 的图片URL格式不正确: ${imgUrl}`);
+        // 如果是相对路径，添加完整域名
+        if (imgUrl.startsWith('/')) {
+          imgUrl = `https://6772-gr1-3gwaj6dyccc835f1-1412377543.tcb.qcloud.la${imgUrl}`;
+        } else if (imgUrl.includes('/gifts/')) {
+          // 如果是 /gifts/xxx.jpg 格式
+          imgUrl = `https://6772-gr1-3gwaj6dyccc835f1-1412377543.tcb.qcloud.la/${imgUrl.replace(/^\//, '')}`;
+        }
+        console.log(`修复后的URL: ${imgUrl}`);
+      }
+      
+      // 只显示以http开头的有效URL
+      if (imgUrl.startsWith('http')) {
+        imgHtml = `<img class="gift-img" src="${imgUrl}" alt="${g.name}">`;
+        console.log(`物品 ${g.name} 显示图片: ${imgUrl.substring(0, 50)}...`);
+      } else {
+        imgHtml = '<div class="gift-img"></div>';
+        console.log(`物品 ${g.name} 图片URL无效，显示空白`);
+      }
+    } else {
+      imgHtml = '<div class="gift-img"></div>';
+      console.log(`物品 ${g.name} 没有图片URL，显示空白`);
     }
     
     return `
@@ -289,7 +412,7 @@ function renderGiftList() {
   }).join("");
 }
 
-// ==================== 领取功能 ====================
+// 5. 领取功能
 function openReceiveModal(giftId) {
   currentGiftId = giftId;
   $("nickname").value = "";
@@ -336,61 +459,7 @@ $("confirmReceive").onclick = async () => {
   }
 };
 
-// ==================== 添加物品功能 ====================
-$("addGift").onclick = async () => {
-  const name = $("giftName").value.trim();
-  const stock = parseInt($("giftStock").value);
-  const desc = $("giftDesc").value.trim();
-  
-  if (!name) {
-    showTip("请输入物品名称！");
-    $("giftName").focus();
-    return;
-  }
-  
-  if (isNaN(stock) || stock < 1) {
-    showTip("请输入有效的数量（至少1）！");
-    $("giftStock").focus();
-    return;
-  }
-  
-  if (!desc) {
-    showTip("请输入物品背后的故事！");
-    $("giftDesc").focus();
-    return;
-  }
-  
-  // 构建物品数据
-  const giftData = {
-    name, 
-    stock, 
-    desc,
-    img: uploadedImageUrl || "",
-    claimers: [], 
-    claimed: 0
-  };
-  
-  console.log("添加物品，数据:", giftData);
-  const res = await callAPI("add", giftData);
-  
-  if (res.code === 0) {
-    showTip("物品添加成功 ✨");
-    
-    // 清空表单
-    $("giftName").value = "";
-    $("giftStock").value = 1;
-    $("giftDesc").value = "";
-    $("uploadImg").value = "";
-    uploadedImageUrl = "";
-    
-    // 重新加载列表
-    await loadGiftList();
-  } else {
-    showTip(`添加失败: ${res.msg}`);
-  }
-};
-
-// ==================== 管理员功能 ====================
+// 6. 管理员功能
 let adminCount = 0;
 $("adminBtn").onclick = () => {
   adminCount++;
@@ -405,7 +474,7 @@ $("adminBtn").onclick = () => {
   setTimeout(() => adminCount = 0, 2000);
 };
 
-// ==================== 模态框外部点击关闭 ====================
+// 7. 模态框外部点击关闭
 window.onclick = (e) => {
   if (e.target === $("receiveModal")) {
     $("receiveModal").classList.remove("show");
