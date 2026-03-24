@@ -98,10 +98,9 @@ button.btn:active{background:#7a3b2f}
 
 <script>
 // ==================== 配置区域 ====================
-// 【重要】请根据您的实际环境修改以下配置
-const ENV_ID = "gr1-3gwaj6dyccc835f1"; // 您的云开发环境ID
-const GIFT_FUNC_URL = `https://${ENV_ID}.service.tcloudbase.com/gift`; // gift云函数地址
-const UPLOAD_URL = `https://${ENV_ID}.service.tcloudbase.com/upload`; // upload云函数地址
+// 使用您测试成功的gift地址，并基于此推导upload地址
+const GIFT_FUNC_URL = "https://gr1-3gwaj6dyccc835f1-1412377543.ap-shanghai.app.tcloudbase.com/gift";
+const UPLOAD_URL = "https://gr1-3gwaj6dyccc835f1-1412377543.ap-shanghai.app.tcloudbase.com/upload"; // 已调整为相同格式
 
 // ==================== 工具函数 ====================
 const $ = id => document.getElementById(id);
@@ -146,7 +145,6 @@ async function request(api, data = {}) {
 }
 
 // ==================== 图片处理函数 ====================
-// 图片压缩辅助函数
 function compressImage(file, maxWidth, maxHeight, quality) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -158,8 +156,6 @@ function compressImage(file, maxWidth, maxHeight, quality) {
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
-
-        // 计算缩放比例
         if (width > height && width > maxWidth) {
           height = Math.round((height * maxWidth) / width);
           width = maxWidth;
@@ -167,16 +163,11 @@ function compressImage(file, maxWidth, maxHeight, quality) {
           width = Math.round((width * maxHeight) / height);
           height = maxHeight;
         }
-
         canvas.width = width;
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         ctx.drawImage(img, 0, 0, width, height);
-
-        // 转换为Blob对象
-        canvas.toBlob((blob) => {
-          resolve(blob);
-        }, 'image/jpeg', quality);
+        canvas.toBlob((blob) => { resolve(blob); }, 'image/jpeg', quality);
       };
       img.onerror = reject;
     };
@@ -184,49 +175,27 @@ function compressImage(file, maxWidth, maxHeight, quality) {
   });
 }
 
-// 上传图片到云开发存储 - 已修复
 async function uploadToCloudStorage(file) {
   try {
     showTip("正在上传图片...");
-    
-    // 1. 压缩图片
     const compressedBlob = await compressImage(file, 800, 600, 0.8);
     console.log("压缩后文件大小:", compressedBlob.size, "字节");
-    
-    // 2. 创建FormData
     const formData = new FormData();
     formData.append('file', compressedBlob, 'upload.jpg');
-    
-    // 3. 调用upload云函数
     console.log("上传图片到:", UPLOAD_URL);
-    const response = await fetch(UPLOAD_URL, {
-      method: 'POST',
-      body: formData
-    });
-    
+    const response = await fetch(UPLOAD_URL, { method: 'POST', body: formData });
     console.log("上传响应状态:", response.status, response.statusText);
-    
-    // 4. 解析响应
     const result = await response.json();
     console.log("upload接口返回的完整结果:", result);
-    
-    if (result.code !== 0) {
-      throw new Error(result.msg || '上传失败');
-    }
-    
-    // 5. 【关键修复】正确提取图片URL
-    // 根据upload接口的响应结构，URL在 result.data.url 中
+    if (result.code !== 0) { throw new Error(result.msg || '上传失败'); }
     const imageUrl = result.data?.url;
     console.log("提取的图片URL:", imageUrl);
-    
     if (!imageUrl) {
       console.error("无法提取图片URL，完整响应:", result);
       throw new Error('服务器返回的图片URL为空');
     }
-    
     showTip("图片上传成功 ✨");
     return imageUrl;
-    
   } catch (error) {
     console.error("上传失败详细:", error);
     throw new Error(`图片上传失败: ${error.message}`);
@@ -236,20 +205,16 @@ async function uploadToCloudStorage(file) {
 // ==================== 状态管理 ====================
 let giftData = [];
 let currentGiftId = null;
-let uploadedImageUrl = ""; // 存储上传后的图片URL
+let uploadedImageUrl = "";
 
 // ==================== 欢迎信管理 ====================
 $("saveLetter").onclick = () => {
   const content = $("editLetter").value.trim();
-  if (!content) {
-    showTip("请输入信件内容！");
-    return;
-  }
+  if (!content) { showTip("请输入信件内容！"); return; }
   localStorage.setItem("letterContent", content);
   $("letterContent").innerText = content;
   showTip("信件保存成功 ✨");
 };
-
 $("letterClose").onclick = () => {
   $("letterBox").style.display = "none";
   localStorage.setItem("hasReadLetter", "1");
@@ -260,25 +225,20 @@ $("letterClose").onclick = () => {
 $("uploadImg").onchange = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
-  
   console.log("选择的文件:", file.name, "大小:", file.size, "类型:", file.type);
-  
   if (!file.type.startsWith('image/')) {
     showTip("请选择图片文件！");
     $("uploadImg").value = "";
     return;
   }
-  
   if (file.size > 2 * 1024 * 1024) {
     showTip("图片大小不能超过2MB");
     $("uploadImg").value = "";
     return;
   }
-  
   try {
     uploadedImageUrl = await uploadToCloudStorage(file);
     console.log("uploadedImageUrl变量已设置为:", uploadedImageUrl);
-    
   } catch (error) {
     showTip(error.message);
     uploadedImageUrl = "";
@@ -296,31 +256,20 @@ async function loadList() {
     $("giftList").innerHTML = `<div class="empty-state">加载失败，请刷新页面重试</div>`;
   }
 }
-
 function renderList() {
   const el = $("giftList");
-  
   if (!giftData.length) {
-    el.innerHTML = `
-      <div class="empty-state">
-        <p>暂无李物</p>
-        <p style="margin-top:10px;font-size:14px;">点击右上角⚙️添加第一个物品</p>
-      </div>`;
+    el.innerHTML = `<div class="empty-state"><p>暂无李物</p><p style="margin-top:10px;font-size:14px;">点击右上角⚙️添加第一个物品</p></div>`;
     return;
   }
-  
   el.innerHTML = giftData.map(g => {
     const left = (g.stock || 1) - (g.claimed || 0);
     const canGet = left > 0;
     const claimers = g.claimers || [];
     const has = claimers.length > 0 ? claimers.join("、") : "暂无领取记录";
     const latestOwner = claimers.length > 0 ? claimers[claimers.length - 1] : null;
-    
-    // 【修复】正确判断是否有自定义图片
-    const hasCustomImage = g.img && g.img.length > 10 && 
-                          (g.img.startsWith('http://') || g.img.startsWith('https://'));
+    const hasCustomImage = g.img && g.img.length > 10 && (g.img.startsWith('http://') || g.img.startsWith('https://'));
     const imgSrc = hasCustomImage ? g.img : `https://picsum.photos/260/180?random=${g._id}&sig=${Date.now()}`;
-    
     return `
     <div class="gift-card">
       <img class="gift-img" src="${imgSrc}" alt="${g.name}" onerror="this.onerror=null; this.src='https://picsum.photos/260/180?random=${g._id}'">
@@ -345,37 +294,17 @@ function openGet(id) {
   $("receiveModal").classList.add("show");
   $("nickname").focus();
 }
-
 $("confirmReceive").onclick = async () => {
   const nickname = $("nickname").value.trim();
-  if (!nickname) {
-    showTip("请输入你的昵称！");
-    $("nickname").focus();
-    return;
-  }
-  
+  if (!nickname) { showTip("请输入你的昵称！"); $("nickname").focus(); return; }
   const gift = giftData.find(x => x._id === currentGiftId);
-  if (!gift) {
-    showTip("物品不存在！");
-    $("receiveModal").classList.remove("show");
-    return;
-  }
-  
+  if (!gift) { showTip("物品不存在！"); $("receiveModal").classList.remove("show"); return; }
   if (gift.claimers && gift.claimers.includes(nickname)) {
-    showTip("你已经领取过这个物品啦～");
-    $("nickname").select();
-    return;
+    showTip("你已经领取过这个物品啦～"); $("nickname").select(); return;
   }
-  
   const newClaimers = [...(gift.claimers || []), nickname];
   const newClaimed = (gift.claimed || 0) + 1;
-  
-  const res = await request("update", {
-    id: currentGiftId,
-    claimers: newClaimers,
-    claimed: newClaimed
-  });
-  
+  const res = await request("update", { id: currentGiftId, claimers: newClaimers, claimed: newClaimed });
   if (res.code === 0) {
     showTip("领取成功 ✨");
     $("receiveModal").classList.remove("show");
@@ -390,46 +319,16 @@ $("addGift").onclick = async () => {
   const name = $("giftName").value.trim();
   const stock = parseInt($("giftStock").value);
   const desc = $("giftDesc").value.trim();
-  
-  if (!name) {
-    showTip("请输入物品名称！");
-    $("giftName").focus();
-    return;
-  }
-  
-  if (isNaN(stock) || stock < 1) {
-    showTip("请输入有效的数量（至少1）！");
-    $("giftStock").focus();
-    return;
-  }
-  
-  if (!desc) {
-    showTip("请输入物品背后的故事！");
-    $("giftDesc").focus();
-    return;
-  }
-  
-  // 构建物品数据
-  const giftData = {
-    name, 
-    stock, 
-    desc,
-    img: uploadedImageUrl || "",
-    claimers: [], 
-    claimed: 0
-  };
-  
+  if (!name) { showTip("请输入物品名称！"); $("giftName").focus(); return; }
+  if (isNaN(stock) || stock < 1) { showTip("请输入有效的数量（至少1）！"); $("giftStock").focus(); return; }
+  if (!desc) { showTip("请输入物品背后的故事！"); $("giftDesc").focus(); return; }
+  const giftData = { name, stock, desc, img: uploadedImageUrl || "", claimers: [], claimed: 0 };
   console.log("添加物品，数据:", giftData);
   const res = await request("add", giftData);
-  
   if (res.code === 0) {
     showTip("物品添加成功 ✨");
-    $("giftName").value = "";
-    $("giftStock").value = 1;
-    $("giftDesc").value = "";
-    $("uploadImg").value = "";
-    uploadedImageUrl = "";
-    loadList();
+    $("giftName").value = ""; $("giftStock").value = 1; $("giftDesc").value = ""; $("uploadImg").value = "";
+    uploadedImageUrl = ""; loadList();
   } else {
     showTip(`添加失败: ${res.msg}`);
   }
@@ -441,38 +340,22 @@ $("adminBtn").onclick = () => {
   adminCount++;
   if (adminCount === 3) {
     $("adminPanel").classList.toggle("show");
-    const tip = $("adminPanel").classList.contains("show") 
-      ? "管理员模式已开启 ✨" 
-      : "管理员模式已关闭";
+    const tip = $("adminPanel").classList.contains("show") ? "管理员模式已开启 ✨" : "管理员模式已关闭";
     showTip(tip);
     adminCount = 0;
   }
   setTimeout(() => adminCount = 0, 2000);
 };
-
-// ==================== 模态框外部点击关闭 ====================
-window.onclick = (e) => {
-  if (e.target === $("receiveModal")) {
-    $("receiveModal").classList.remove("show");
-  }
-};
+window.onclick = (e) => { if (e.target === $("receiveModal")) { $("receiveModal").classList.remove("show"); } };
 
 // ==================== 页面初始化 ====================
 (async () => {
   try {
-    if (localStorage.getItem("hasReadLetter")) {
-      $("letterBox").style.display = "none";
-    }
-    
+    if (localStorage.getItem("hasReadLetter")) { $("letterBox").style.display = "none"; }
     const savedLetter = localStorage.getItem("letterContent");
-    if (savedLetter) {
-      $("letterContent").innerText = savedLetter;
-      $("editLetter").value = savedLetter;
-    }
-    
+    if (savedLetter) { $("letterContent").innerText = savedLetter; $("editLetter").value = savedLetter; }
     await loadList();
     showTip("欢迎来到李物领养站 ✨");
-    
   } catch (error) {
     console.error("初始化错误:", error);
     $("giftList").innerHTML = `
