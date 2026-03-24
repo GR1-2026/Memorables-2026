@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>回忆礼物领养站 🧡</title>
+<title>“李”物领养站 🧡</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
 body{background:#f7f3ee;color:#333;padding:16px;max-width:1000px;margin:0 auto}
@@ -30,7 +30,8 @@ button.btn:active{background:#7a3b2f}
 .gift-name{font-size:16px;margin-bottom:8px}
 .tag{font-size:12px;background:#f3efe9;color:#8B4B35;padding:4px 8px;border-radius:10px;display:inline-block;margin-bottom:10px}
 .desc{font-size:14px;line-height:1.5;margin-bottom:10px;color:#555}
-.owners{font-size:12px;color:#777;margin-bottom:12px}
+.owners{font-size:12px;color:#777;margin-bottom:12px;min-height:20px}
+.new-owner{font-size:12px;color:#8B4B35;margin-top:8px;font-style:italic;display:none}
 .receive-btn{width:100%;padding:10px;border-radius:8px;border:none;background:#8B4B35;color:white;cursor:pointer}
 .receive-btn:disabled{background:#ccc}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;padding:20px;z-index:9}
@@ -61,7 +62,7 @@ button.btn:active{background:#7a3b2f}
 </div>
 
 <div class="nav">
-  <div class="title">回忆礼物领养站 🧡</div>
+  <div class="title">李物领养站 🧡</div>
   <button class="admin-btn" id="adminBtn">⚙️</button>
 </div>
 
@@ -72,7 +73,7 @@ button.btn:active{background:#7a3b2f}
     <button class="btn" id="saveLetter">保存信件</button>
   </div>
   <div class="form-item">
-    <label>添加回忆物品</label>
+    <label>添加李物</label>
     <input type="text" id="giftName" placeholder="比如：童年的小熊">
     <input type="number" id="giftStock" value="1" min="1" placeholder="可领取数量（至少1）">
     <textarea id="giftDesc" placeholder="比如：小学毕业同桌送的礼物"></textarea>
@@ -82,7 +83,7 @@ button.btn:active{background:#7a3b2f}
 </div>
 
 <div class="gift-grid" id="giftList">
-  <div class="loading">正在加载回忆物品...</div>
+  <div class="loading">正在加载李物...</div>
 </div>
 
 <div class="modal" id="receiveModal">
@@ -245,7 +246,7 @@ function renderList() {
   if (!giftData.length) {
     el.innerHTML = `
       <div class="empty-state">
-        <p>暂无回忆物品</p>
+        <p>暂无李物</p>
         <p style="margin-top:10px;font-size:14px;">点击右上角⚙️添加第一个物品</p>
       </div>`;
     return;
@@ -256,16 +257,23 @@ function renderList() {
     const canGet = left > 0;
     const claimers = g.claimers || [];
     const has = claimers.length > 0 ? claimers.join("、") : "暂无领取记录";
-    const imgSrc = g.img || `https://picsum.photos/260/180?random=${g._id}&sig=${Date.now()}`;
+    const latestOwner = claimers.length > 0 ? claimers[claimers.length - 1] : null;
+    
+    // 修复：正确判断是否有自定义图片
+    // 如果 g.img 存在且是 base64 格式或以 data:image 开头，则使用它
+    // 否则使用占位图
+    const hasCustomImage = g.img && (g.img.startsWith('data:image') || g.img.includes('base64'));
+    const imgSrc = hasCustomImage ? g.img : `https://picsum.photos/260/180?random=${g._id}&sig=${Date.now()}`;
     
     return `
     <div class="gift-card">
-      <img class="gift-img" src="${imgSrc}" alt="${g.name}" onerror="this.src='https://picsum.photos/260/180?random=${g._id}'">
+      <img class="gift-img" src="${imgSrc}" alt="${g.name}" onerror="this.onerror=null; this.src='https://picsum.photos/260/180?random=${g._id}'">
       <div class="gift-info">
         <div class="gift-name">${g.name}</div>
         <span class="tag">剩余 ${left} 份</span>
         <div class="desc">${g.desc || '暂无描述'}</div>
         <div class="owners">${has}</div>
+        ${latestOwner ? `<div class="new-owner" style="display:block;">最新主人：${latestOwner}</div>` : ''}
         <button class="receive-btn" ${canGet ? '' : 'disabled'} onclick="openGet('${g._id}')">
           ${canGet ? '领取这份回忆' : '已领完'}
         </button>
@@ -413,7 +421,7 @@ window.onclick = (e) => {
     
     // 加载物品列表
     await loadList();
-    showTip("欢迎来到回忆礼物领养站 ✨");
+    showTip("欢迎来到“李”物领养站 ✨");
     
   } catch (error) {
     console.error("初始化错误:", error);
