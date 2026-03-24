@@ -3,362 +3,389 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>回忆礼物领养站 - 400错误修复</title>
+<title>回忆礼物领养站 🧡</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;}
-body{padding:20px;background:#f7f3ee;font-family:Arial;max-width:800px;margin:0 auto;}
-h1{color:#8B4B35;margin-bottom:20px;}
-.box{background:#fff;padding:20px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.1);margin-bottom:20px;}
-label{display:block;margin:8px 0 4px;color:#666;}
-input,textarea{width:100%;padding:10px;border:1px solid #ddd;border-radius:4px;margin-bottom:10px;}
-button{width:100%;padding:12px;background:#8B4B35;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:16px;}
-button:hover{background:#7a402d;}
-.tip{padding:10px;margin:10px 0;border-radius:4px;display:none;}
-.success{background:#d4edda;color:#155724;display:block;}
-.error{background:#f8d7da;color:#721c24;display:block;}
-#giftList{margin-top:20px;}
-.item{background:#fff;padding:15px;border-radius:8px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
-.loading{text-align:center;padding:20px;color:#666;}
-.debug-panel{background:#f8f9fa;padding:15px;border-radius:8px;margin:20px 0;border-left:4px solid #6c757d;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+body{background:#f7f3ee;color:#333;padding:16px;max-width:1000px;margin:0 auto}
+.letter-box{position:fixed;inset:0;background:#fff;display:flex;align-items:center;justify-content:center;padding:20px;z-index:10}
+.letter-card{background:#fff;border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.08);padding:32px;max-width:500px;width:100%;position:relative}
+.letter-close{position:absolute;right:20px;top:20px;width:36px;height:36px;border-radius:50%;border:none;background:#f3f3f3;cursor:pointer;font-size:18px;color:#666}
+.letter-title{text-align:center;font-size:22px;margin-bottom:20px;color:#8B4B35}
+.letter-content{line-height:1.7;font-size:15px;color:#444;margin-bottom:16px}
+.letter-sign{text-align:right;font-size:14px;color:#8B4B35}
+.nav{display:flex;justify-content:space-between;align-items:center;margin:20px 0}
+.title{font-size:20px;color:#8B4B35}
+.admin-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#f3f3f3;border:none;cursor:pointer}
+.admin-panel{background:#fff;border-radius:12px;padding:20px;margin-bottom:24px;display:none}
+.admin-panel.show{display:block}
+.form-item{margin-bottom:16px}
+.form-item label{display:block;margin-bottom:8px;font-size:14px;color:#666}
+input,textarea{width:100%;border:1px solid #e0e0e0;border-radius:8px;padding:12px;font-size:14px;margin-bottom:8px}
+button.btn{width:100%;background:#8B4B35;color:white;border:none;border-radius:8px;padding:14px;font-size:15px;cursor:pointer}
+button.btn:active{background:#7a3b2f}
+.gift-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+.gift-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
+.gift-img{width:100%;height:180px;object-fit:cover}
+.gift-info{padding:16px}
+.gift-name{font-size:16px;margin-bottom:8px}
+.tag{font-size:12px;background:#f3efe9;color:#8B4B35;padding:4px 8px;border-radius:10px;display:inline-block;margin-bottom:10px}
+.desc{font-size:14px;line-height:1.5;margin-bottom:10px;color:#555}
+.owners{font-size:12px;color:#777;margin-bottom:12px}
+.receive-btn{width:100%;padding:10px;border-radius:8px;border:none;background:#8B4B35;color:white;cursor:pointer}
+.receive-btn:disabled{background:#ccc}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;padding:20px;z-index:9}
+.modal.show{display:flex}
+.modal-card{background:#fff;border-radius:16px;padding:24px;max-width:360px;width:100%}
+.modal-title{font-size:18px;margin-bottom:16px;text-align:center;color:#8B4B35}
+.tip{position:fixed;left:50%;bottom:30px;transform:translateX(-50%);background:#8B4B35;color:white;padding:10px 18px;border-radius:20px;font-size:14px;opacity:0;transition:opacity 0.3s;z-index:99}
+.tip.show{opacity:1}
+.loading{text-align:center;padding:40px;color:#999;font-size:16px}
+.empty-state{text-align:center;padding:60px 20px;color:#999;grid-column:1/-1}
 </style>
 </head>
 <body>
-<h1>回忆礼物领养站 🧡</h1>
 
-<div class="debug-panel">
-  <h3>🔧 HTTP 400错误调试</h3>
-  <p><strong>问题：</strong>服务器返回HTTP 400错误（错误的请求）</p>
-  <p><strong>可能原因：</strong></p>
-  <ol>
-    <li>JSON格式不正确</li>
-    <li>缺少必要的请求头</li>
-    <li>URL编码问题</li>
-    <li>请求体太大</li>
-  </ol>
-  <button id="debugBtn" style="background:#2196F3;">运行调试测试</button>
-</div>
+<div class="letter-box" id="letterBox">
+  <div class="letter-card">
+    <button class="letter-close" id="letterClose">×</button>
+    <h2 class="letter-title">致我亲爱的朋友们</h2>
+    <div class="letter-content" id="letterContent">
+当我准备踏上新的旅程，想把这些承载着我们共同回忆的小物件分享给你。
+每一件物品都藏着一段时光、一次欢笑，或是一个让我们温暖很久的瞬间。
 
-<div class="box">
-  <h3>API测试</h3>
-  <div style="display:flex;gap:10px;margin-bottom:15px;">
-    <button id="testListBtn" style="flex:1;background:#4CAF50;">测试list接口</button>
-    <button id="testAddBtn" style="flex:1;background:#2196F3;">测试add接口</button>
+这不是告别，只是换一种方式，把回忆留给你。
+谢谢你来过，也谢谢你陪我走过。
+    </div>
+    <div class="letter-sign">—— 你的朋友</div>
   </div>
 </div>
 
-<div class="box">
-  <h3>添加物品</h3>
-  <label>物品名称</label>
-  <input type="text" id="name" placeholder="输入名称" value="测试物品">
-  
-  <label>物品描述</label>
-  <textarea id="desc" placeholder="输入描述">测试描述</textarea>
-  
-  <button id="addBtn">添加物品</button>
-  <button id="refreshBtn" style="background:#9C27B0; margin-top:10px;">刷新列表</button>
+<div class="nav">
+  <div class="title">回忆礼物领养站 🧡</div>
+  <button class="admin-btn" id="adminBtn">⚙️</button>
 </div>
 
-<div id="tip" class="tip"></div>
-
-<div class="box">
-  <h3>调试日志</h3>
-  <div id="debugLog" style="background:#212529;color:#fff;padding:15px;border-radius:4px;max-height:400px;overflow-y:auto;font-family:monospace;font-size:12px;white-space:pre-wrap;">
-等待操作...
+<div class="admin-panel" id="adminPanel">
+  <div class="form-item">
+    <label>编辑欢迎信</label>
+    <textarea id="editLetter" rows="4"></textarea>
+    <button class="btn" id="saveLetter">保存信件</button>
+  </div>
+  <div class="form-item">
+    <label>添加回忆物品</label>
+    <input type="text" id="giftName" placeholder="比如：童年的小熊">
+    <input type="number" id="giftStock" value="1" min="1" placeholder="可领取数量（至少1）">
+    <textarea id="giftDesc" placeholder="比如：小学毕业同桌送的礼物"></textarea>
+    <input type="file" id="uploadImg" accept="image/*">
+    <button class="btn" id="addGift">添加物品</button>
   </div>
 </div>
 
-<div id="giftList" class="loading">点击"测试list接口"加载数据</div>
+<div class="gift-grid" id="giftList">
+  <div class="loading">正在加载回忆物品...</div>
+</div>
+
+<div class="modal" id="receiveModal">
+  <div class="modal-card">
+    <div class="modal-title">领取这份回忆</div>
+    <input type="text" id="nickname" placeholder="请输入你的昵称">
+    <button class="btn" id="confirmReceive">确认领取</button>
+  </div>
+</div>
+
+<div class="tip" id="tip"></div>
 
 <script>
-// 配置
-const HTTP_TRIGGER_URL = "https://gr1-3gwaj6dyccc835f1-1412377543.ap-shanghai.app.tcloudbase.com/gift";
+// 配置 ===============================================
+// 您的云函数HTTP触发器地址（这是我们调试好的地址）
+const CLOUD_FUNC_URL = "https://gr1-3gwaj6dyccc835f1-1412377543.ap-shanghai.app.tcloudbase.com/gift";
 
-// 调试日志
-function addDebugLog(message, type = 'info') {
-  const logEl = document.getElementById('debugLog');
-  const timestamp = new Date().toLocaleTimeString();
-  const color = type === 'success' ? '#4CAF50' : 
-                type === 'error' ? '#f44336' : 
-                type === 'warning' ? '#FF9800' : '#03A9F4';
-  
-  const logLine = `[${timestamp}] <span style="color:${color}">${message}</span>`;
-  logEl.innerHTML = logLine + '\n' + logEl.innerHTML;
-  
-  // 保持日志数量
-  if (logEl.innerHTML.split('\n').length > 50) {
-    const lines = logEl.innerHTML.split('\n').slice(0, 50);
-    logEl.innerHTML = lines.join('\n');
-  }
+// 工具函数 ============================================
+const $ = id => document.getElementById(id);
+
+function showTip(msg) {
+  const t = $("tip");
+  t.innerText = msg;
+  t.classList.add("show");
+  clearTimeout(t.timer);
+  t.timer = setTimeout(() => t.classList.remove("show"), 2000);
 }
 
-// 显示提示
-function showTip(msg, isSuccess) {
-  addDebugLog(`提示: ${msg}`, isSuccess ? 'success' : 'error');
-  const tipEl = document.getElementById('tip');
-  tipEl.innerText = msg;
-  tipEl.className = isSuccess ? 'tip success' : 'tip error';
-  setTimeout(() => {
-    tipEl.className = 'tip';
-  }, 3000);
-}
-
-// 调用云函数API（修复版）
-async function callGiftAPI(data) {
-  addDebugLog(`发送请求: ${JSON.stringify(data)}`, 'info');
+// 核心API调用函数 =====================================
+async function request(api, data = {}) {
+  console.log(`调用API: ${api}`, data);
+  showTip("处理中...");
   
   try {
-    // 确保数据是有效的JSON
-    const jsonData = JSON.stringify(data);
-    
-    // 详细的请求信息
-    addDebugLog(`URL: ${HTTP_TRIGGER_URL}`, 'info');
-    addDebugLog(`Method: POST`, 'info');
-    addDebugLog(`Content-Type: application/json`, 'info');
-    addDebugLog(`Body: ${jsonData}`, 'info');
-    
-    const response = await fetch(HTTP_TRIGGER_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0'
-      },
-      mode: 'cors',
-      cache: 'no-cache',
-      credentials: 'omit',
-      body: jsonData
+    const resp = await fetch(CLOUD_FUNC_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ api, ...data })
     });
     
-    addDebugLog(`响应状态: ${response.status} ${response.statusText}`, 'info');
-    
-    // 获取响应文本（无论状态码是什么）
-    const responseText = await response.text();
-    addDebugLog(`响应体: ${responseText}`, 'info');
-    
-    if (!response.ok) {
-      // 尝试解析为JSON
-      let errorData = responseText;
-      try {
-        errorData = JSON.parse(responseText);
-      } catch (e) {
-        // 不是JSON，保持原文本
-      }
-      
-      throw new Error(`HTTP ${response.status}: ${response.statusText}\n${typeof errorData === 'object' ? JSON.stringify(errorData, null, 2) : errorData}`);
+    if (!resp.ok) {
+      throw new Error(`请求失败: ${resp.status} ${resp.statusText}`);
     }
     
-    // 解析响应
-    const result = JSON.parse(responseText);
-    addDebugLog(`解析结果: ${JSON.stringify(result)}`, 'success');
+    const result = await resp.json();
+    console.log(`API响应:`, result);
+    
+    if (result.code !== 0) {
+      throw new Error(result.msg || "操作失败");
+    }
     
     return result;
-    
-  } catch (error) {
-    addDebugLog(`请求失败: ${error.message}`, 'error');
-    console.error("API调用详细错误:", error);
-    throw error;
+  } catch (e) {
+    console.error("请求错误:", e);
+    showTip(`失败: ${e.message}`);
+    return { code: -1, msg: e.message };
   }
 }
 
-// 调试测试
-async function runDebugTests() {
-  addDebugLog('=== 开始调试测试 ===', 'warning');
-  
-  // 测试1：空请求
-  addDebugLog('测试1: 发送空对象 {}', 'info');
-  try {
-    const result1 = await fetch(HTTP_TRIGGER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: '{}'
-    });
-    addDebugLog(`空对象响应: ${result1.status} ${result1.statusText}`, 'info');
-  } catch (e) {
-    addDebugLog(`空对象错误: ${e.message}`, 'error');
-  }
-  
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  // 测试2：GET请求
-  addDebugLog('测试2: 发送GET请求', 'info');
-  try {
-    const result2 = await fetch(HTTP_TRIGGER_URL, { method: 'GET' });
-    addDebugLog(`GET响应: ${result2.status} ${result2.statusText}`, 'info');
-  } catch (e) {
-    addDebugLog(`GET错误: ${e.message}`, 'error');
-  }
-  
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  // 测试3：简单的list请求
-  addDebugLog('测试3: 发送简单的list请求', 'info');
-  try {
-    const result3 = await callGiftAPI({ api: 'list' });
-    addDebugLog(`list测试结果: ${JSON.stringify(result3)}`, 'success');
-  } catch (e) {
-    addDebugLog(`list测试错误: ${e.message}`, 'error');
-  }
-  
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  // 测试4：查看URL是否可访问
-  addDebugLog('测试4: 直接访问URL', 'info');
-  try {
-    const result4 = await fetch(HTTP_TRIGGER_URL);
-    addDebugLog(`直接访问响应: ${result4.status} ${result4.statusText}`, 'info');
-  } catch (e) {
-    addDebugLog(`直接访问错误: ${e.message}`, 'error');
-  }
-  
-  addDebugLog('=== 调试测试完成 ===', 'warning');
-}
+// 状态管理 ============================================
+let giftData = [];
+let currentGiftId = null;
+let imgBase64 = "";
 
-// 测试list接口
-async function testListAPI() {
-  addDebugLog('测试list接口...', 'info');
-  showTip("正在测试list接口...", true);
-  
-  try {
-    const result = await callGiftAPI({ api: 'list' });
-    
-    if (result.code === 0) {
-      showTip(`list接口成功! 返回 ${result.data?.length || 0} 条数据`, true);
-      displayGiftList(result.data);
-    } else {
-      showTip(`list接口错误: ${result.msg}`, false);
-    }
-  } catch (error) {
-    showTip(`list接口失败: ${error.message}`, false);
+// 欢迎信管理 ==========================================
+$("saveLetter").onclick = () => {
+  const content = $("editLetter").value.trim();
+  if (!content) {
+    showTip("请输入信件内容！");
+    return;
   }
-}
+  localStorage.setItem("letterContent", content);
+  $("letterContent").innerText = content;
+  showTip("信件保存成功 ✨");
+};
 
-// 测试add接口
-async function testAddAPI() {
-  addDebugLog('测试add接口...', 'info');
-  showTip("正在测试add接口...", true);
-  
-  try {
-    const result = await callGiftAPI({
-      api: 'add',
-      name: '调试测试_' + Date.now(),
-      desc: '这是一个调试测试物品'
-    });
-    
-    if (result.code === 0) {
-      showTip(`add接口成功! 物品ID: ${result.data?._id}`, true);
-      setTimeout(testListAPI, 1000);
-    } else {
-      showTip(`add接口错误: ${result.msg}`, false);
-    }
-  } catch (error) {
-    showTip(`add接口失败: ${error.message}`, false);
-  }
-}
+$("letterClose").onclick = () => {
+  $("letterBox").style.display = "none";
+  localStorage.setItem("hasReadLetter", "1");
+  showTip("欢迎信已关闭");
+};
 
-// 添加物品
-async function addGift() {
-  const giftName = document.getElementById('name').value.trim();
-  const giftDesc = document.getElementById('desc').value.trim();
+// 图片上传处理 ========================================
+$("uploadImg").onchange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
   
-  if (!giftName) {
-    showTip("请填写物品名称", false);
+  // 图片大小限制：1MB
+  if (file.size > 1024 * 1024) {
+    showTip("图片不能超过1MB！");
+    $("uploadImg").value = "";
     return;
   }
   
-  addDebugLog(`添加物品: ${giftName}`, 'info');
-  showTip("正在添加物品...", true);
-  
-  try {
-    const result = await callGiftAPI({
-      api: 'add',
-      name: giftName,
-      desc: giftDesc
-    });
-    
-    if (result.code === 0) {
-      showTip(`添加成功! 物品ID: ${result.data?._id}`, true);
-      document.getElementById('name').value = '';
-      document.getElementById('desc').value = '';
-      setTimeout(testListAPI, 1000);
-    } else {
-      showTip(`添加失败: ${result.msg}`, false);
-    }
-  } catch (error) {
-    showTip(`添加失败: ${error.message}`, false);
+  const reader = new FileReader();
+  reader.onload = (e) => { 
+    imgBase64 = e.target.result; 
+    showTip("图片已准备好 ✨"); 
+  };
+  reader.onerror = () => {
+    showTip("图片读取失败！");
+    imgBase64 = "";
+  };
+  reader.readAsDataURL(file);
+};
+
+// 物品列表管理 ========================================
+async function loadList() {
+  const res = await request("list");
+  if (res.code === 0) {
+    giftData = res.data;
+    renderList();
+  } else {
+    $("giftList").innerHTML = `<div class="empty-state">加载失败，请刷新页面重试</div>`;
   }
 }
 
-// 显示物品列表
-function displayGiftList(gifts) {
-  const listEl = document.getElementById('giftList');
+function renderList() {
+  const el = $("giftList");
   
-  if (!gifts || gifts.length === 0) {
-    listEl.innerHTML = '<div class="item">暂无物品</div>';
+  if (!giftData.length) {
+    el.innerHTML = `
+      <div class="empty-state">
+        <p>暂无回忆物品</p>
+        <p style="margin-top:10px;font-size:14px;">点击右上角⚙️添加第一个物品</p>
+      </div>`;
     return;
   }
   
-  listEl.innerHTML = gifts.map(gift => `
-    <div class='item'>
-      <h4>${gift.name}</h4>
-      <p>${gift.desc || '无描述'}</p>
-      <p>ID: ${gift._id}</p>
-      <p>库存: ${gift.stock} | 已领取: ${gift.claimed}</p>
-    </div>
-  `).join('');
+  el.innerHTML = giftData.map(g => {
+    const left = (g.stock || 1) - (g.claimed || 0);
+    const canGet = left > 0;
+    const claimers = g.claimers || [];
+    const has = claimers.length > 0 ? claimers.join("、") : "暂无领取记录";
+    const imgSrc = g.img || `https://picsum.photos/260/180?random=${g._id}&sig=${Date.now()}`;
+    
+    return `
+    <div class="gift-card">
+      <img class="gift-img" src="${imgSrc}" alt="${g.name}" onerror="this.src='https://picsum.photos/260/180?random=${g._id}'">
+      <div class="gift-info">
+        <div class="gift-name">${g.name}</div>
+        <span class="tag">剩余 ${left} 份</span>
+        <div class="desc">${g.desc || '暂无描述'}</div>
+        <div class="owners">${has}</div>
+        <button class="receive-btn" ${canGet ? '' : 'disabled'} onclick="openGet('${g._id}')">
+          ${canGet ? '领取这份回忆' : '已领完'}
+        </button>
+      </div>
+    </div>`;
+  }).join("");
 }
 
-// 页面初始化
-document.addEventListener('DOMContentLoaded', function() {
-  addDebugLog('页面初始化完成', 'success');
-  
-  // 绑定事件
-  document.getElementById('debugBtn').addEventListener('click', runDebugTests);
-  document.getElementById('testListBtn').addEventListener('click', testListAPI);
-  document.getElementById('testAddBtn').addEventListener('click', testAddAPI);
-  document.getElementById('addBtn').addEventListener('click', addGift);
-  document.getElementById('refreshBtn').addEventListener('click', testListAPI);
-  
-  // 自动运行简单测试
-  setTimeout(() => {
-    addDebugLog('开始自动简单测试...', 'warning');
-    testListAPI();
-  }, 1000);
-});
+// 领取功能 ============================================
+function openGet(id) {
+  currentGiftId = id;
+  $("nickname").value = "";
+  $("receiveModal").classList.add("show");
+  $("nickname").focus();
+}
 
-// 在控制台添加测试函数
-window.debugCloudFunction = {
-  rawFetch: async function(data) {
-    console.log('原始fetch调用:', data);
-    return await fetch(HTTP_TRIGGER_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
-    });
-  },
+$("confirmReceive").onclick = async () => {
+  const nickname = $("nickname").value.trim();
+  if (!nickname) {
+    showTip("请输入你的昵称！");
+    $("nickname").focus();
+    return;
+  }
   
-  testSimple: async function() {
-    const tests = [
-      { api: 'list' },
-      { api: 'add', name: '控制台测试', desc: '来自控制台' }
-    ];
-    
-    for (let test of tests) {
-      console.log('测试:', test);
-      try {
-        const response = await fetch(HTTP_TRIGGER_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(test)
-        });
-        console.log('响应状态:', response.status, response.statusText);
-        const text = await response.text();
-        console.log('响应体:', text);
-      } catch (error) {
-        console.error('错误:', error);
-      }
-    }
+  const gift = giftData.find(x => x._id === currentGiftId);
+  if (!gift) {
+    showTip("物品不存在！");
+    $("receiveModal").classList.remove("show");
+    return;
+  }
+  
+  // 检查是否已领取
+  if (gift.claimers && gift.claimers.includes(nickname)) {
+    showTip("你已经领取过这个物品啦～");
+    $("nickname").select();
+    return;
+  }
+  
+  // 更新领取信息
+  const newClaimers = [...(gift.claimers || []), nickname];
+  const newClaimed = (gift.claimed || 0) + 1;
+  
+  const res = await request("update", {
+    id: currentGiftId,
+    claimers: newClaimers,
+    claimed: newClaimed
+  });
+  
+  if (res.code === 0) {
+    showTip("领取成功 ✨");
+    $("receiveModal").classList.remove("show");
+    loadList(); // 重新加载列表
+  } else {
+    showTip(`领取失败: ${res.msg}`);
   }
 };
+
+// 添加物品功能 ========================================
+$("addGift").onclick = async () => {
+  // 验证表单
+  const name = $("giftName").value.trim();
+  const stock = parseInt($("giftStock").value);
+  const desc = $("giftDesc").value.trim();
+  
+  if (!name) {
+    showTip("请输入物品名称！");
+    $("giftName").focus();
+    return;
+  }
+  
+  if (isNaN(stock) || stock < 1) {
+    showTip("请输入有效的数量（至少1）！");
+    $("giftStock").focus();
+    return;
+  }
+  
+  if (!desc) {
+    showTip("请输入物品背后的故事！");
+    $("giftDesc").focus();
+    return;
+  }
+  
+  // 构建物品数据
+  const giftData = {
+    name, 
+    stock, 
+    desc,
+    img: imgBase64 || "",
+    claimers: [], 
+    claimed: 0
+  };
+  
+  const res = await request("add", giftData);
+  
+  if (res.code === 0) {
+    showTip("物品添加成功 ✨");
+    // 清空表单
+    $("giftName").value = "";
+    $("giftStock").value = 1;
+    $("giftDesc").value = "";
+    $("uploadImg").value = "";
+    imgBase64 = "";
+    // 重新加载列表
+    loadList();
+  } else {
+    showTip(`添加失败: ${res.msg}`);
+  }
+};
+
+// 管理员功能 ==========================================
+let adminCount = 0;
+$("adminBtn").onclick = () => {
+  adminCount++;
+  if (adminCount === 3) {
+    $("adminPanel").classList.toggle("show");
+    const tip = $("adminPanel").classList.contains("show") 
+      ? "管理员模式已开启 ✨" 
+      : "管理员模式已关闭";
+    showTip(tip);
+    adminCount = 0;
+  }
+  setTimeout(() => adminCount = 0, 2000);
+};
+
+// 模态框外部点击关闭
+window.onclick = (e) => {
+  if (e.target === $("receiveModal")) {
+    $("receiveModal").classList.remove("show");
+  }
+};
+
+// 页面初始化 ==========================================
+(async () => {
+  try {
+    // 欢迎信处理
+    if (localStorage.getItem("hasReadLetter")) {
+      $("letterBox").style.display = "none";
+    }
+    
+    const savedLetter = localStorage.getItem("letterContent");
+    if (savedLetter) {
+      $("letterContent").innerText = savedLetter;
+      $("editLetter").value = savedLetter;
+    }
+    
+    // 加载物品列表
+    await loadList();
+    showTip("欢迎来到回忆礼物领养站 ✨");
+    
+  } catch (error) {
+    console.error("初始化错误:", error);
+    $("giftList").innerHTML = `
+      <div class="empty-state">
+        <p>页面加载失败</p>
+        <p style="margin-top:10px;font-size:14px;">请检查网络连接后刷新页面</p>
+        <button onclick="location.reload()" style="margin-top:20px;padding:8px 16px;background:#8B4B35;color:white;border:none;border-radius:6px;cursor:pointer">刷新页面</button>
+      </div>`;
+  }
+})();
 </script>
 </body>
 </html>
