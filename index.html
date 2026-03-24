@@ -51,11 +51,11 @@ button.btn:active{background:#7a3b2f}
     <button class="letter-close" id="letterClose">×</button>
     <h2 class="letter-title">致我亲爱的朋友们</h2>
     <div class="letter-content" id="letterContent">
-当我准备踏上新的旅程，想把这些承载着我们共同回忆的小物件分享给你。
-每一件物品都藏着一段时光、一次欢笑，或是一个让我们温暖很久的瞬间。
-
-这不是告别，只是换一种方式，把回忆留给你。
+三年半时间或许不算特别长，
+但足够一棵树从种下到结果，也足够让一个人攒下很多很多有趣的经历，和很多很多的小玩意~
+当我准备踏上新的旅程，想把这些承载着回忆或者在某个时刻给我带来过快乐的小玩意分享给你。
 谢谢你来过，也谢谢你陪我走过。
+      （这封信只会显示一次~~中插一个免责声明：如果出现了您送给我的某次礼物，那只是因为我真的真的扛不动了）
     </div>
     <div class="letter-sign">—— 你的朋友</div>
   </div>
@@ -98,8 +98,10 @@ button.btn:active{background:#7a3b2f}
 
 <script>
 // 配置 ===============================================
-// 您的云函数HTTP触发器地址（这是我们调试好的地址）
+// 您的云函数HTTP触发器地址
 const CLOUD_FUNC_URL = "https://gr1-3gwaj6dyccc835f1-1412377543.ap-shanghai.app.tcloudbase.com/gift";
+// 云开发环境ID
+const ENV_ID = "gr1-3gwaj6dyccc835f1";
 
 // 工具函数 ============================================
 const $ = id => document.getElementById(id);
@@ -112,44 +114,7 @@ function showTip(msg) {
   t.timer = setTimeout(() => t.classList.remove("show"), 2000);
 }
 
-// 图片压缩辅助函数
-function compressImage(file, maxWidth, maxHeight, quality) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target.result;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-
-        // 计算缩放比例
-        if (width > height && width > maxWidth) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
-        } else if (height > maxHeight) {
-          width = Math.round((width * maxHeight) / height);
-          height = maxHeight;
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-
-        // 转换为Data URL (JPEG格式更小)
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
-        resolve(compressedDataUrl);
-      };
-      img.onerror = reject;
-    };
-    reader.onerror = reject;
-  });
-}
-
-// 核心API调用函数 =====================================
+// 核心API调用函数
 async function request(api, data = {}) {
   console.log(`调用API: ${api}`, data);
   showTip("处理中...");
@@ -180,12 +145,12 @@ async function request(api, data = {}) {
   }
 }
 
-// 状态管理 ============================================
+// 状态管理
 let giftData = [];
 let currentGiftId = null;
-let imgBase64 = "";
+let uploadedImageUrl = ""; // 改为存储URL
 
-// 欢迎信管理 ==========================================
+// 欢迎信管理
 $("saveLetter").onclick = () => {
   const content = $("editLetter").value.trim();
   if (!content) {
@@ -203,33 +168,101 @@ $("letterClose").onclick = () => {
   showTip("欢迎信已关闭");
 };
 
-// 图片上传处理（已修复：包含图片压缩）=================
+// 图片压缩函数（仅压缩，不转Base64）
+function compressImage(file, maxWidth, maxHeight, quality) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height && width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        } else if (height > maxHeight) {
+          width = Math.round((width * maxHeight) / height);
+          height = maxHeight;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        canvas.toBlob((blob) => {
+          resolve(blob);
+        }, 'image/jpeg', quality);
+      };
+      img.onerror = reject;
+    };
+    reader.onerror = reject;
+  });
+}
+
+// 上传图片到云开发存储
+async function uploadToCloudStorage(file) {
+  try {
+    showTip("正在上传图片...");
+    
+    // 1. 压缩图片
+    const compressedBlob = await compressImage(file, 800, 600, 0.8);
+    
+    // 2. 生成唯一文件名
+    const fileName = `gifts/${Date.now()}_${Math.random().toString(36).slice(2)}.jpg`;
+    const formData = new FormData();
+    formData.append('file', compressedBlob, fileName);
+    
+    // 3. 调用新增的上传接口（见下文说明）
+    const uploadUrl = `https://${ENV_ID}.service.tcloudbase.com/upload`;
+    const response = await fetch(uploadUrl, {
+      method: 'POST',
+      body: formData
+    });
+    
+    if (!response.ok) {
+      throw new Error('图片上传失败');
+    }
+    
+    const result = await response.json();
+    
+    // 4. 返回图片URL
+    const imageUrl = result.url || result.data.url;
+    showTip("图片上传成功 ✨");
+    return imageUrl;
+    
+  } catch (error) {
+    console.error("上传失败:", error);
+    throw new Error("图片上传失败，请重试");
+  }
+}
+
+// 图片上传处理（简化版）
 $("uploadImg").onchange = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
   
-  // 1. 更严格的格式检查
   if (!file.type.startsWith('image/')) {
     showTip("请选择图片文件！");
     $("uploadImg").value = "";
     return;
   }
   
-  // 2. 使用Canvas压缩图片
   try {
-    showTip("正在处理图片...");
-    const compressedDataUrl = await compressImage(file, 800, 600, 0.8); // 压缩到800x600以内，质量80%
-    imgBase64 = compressedDataUrl;
-    showTip("图片处理完成 ✨");
+    // 使用云开发存储上传
+    uploadedImageUrl = await uploadToCloudStorage(file);
   } catch (error) {
-    console.error("图片压缩失败:", error);
-    showTip("图片处理失败，请重试");
-    imgBase64 = "";
+    showTip(error.message);
+    uploadedImageUrl = "";
     $("uploadImg").value = "";
   }
 };
 
-// 物品列表管理 ========================================
+// 物品列表管理
 async function loadList() {
   const res = await request("list");
   if (res.code === 0) {
@@ -259,11 +292,8 @@ function renderList() {
     const has = claimers.length > 0 ? claimers.join("、") : "暂无领取记录";
     const latestOwner = claimers.length > 0 ? claimers[claimers.length - 1] : null;
     
-    // 修复：正确判断是否有自定义图片
-    // 如果 g.img 存在且是 base64 格式或以 data:image 开头，则使用它
-    // 否则使用占位图
-    const hasCustomImage = g.img && (g.img.startsWith('data:image') || g.img.includes('base64'));
-    const imgSrc = hasCustomImage ? g.img : `https://picsum.photos/260/180?random=${g._id}&sig=${Date.now()}`;
+    // 修复：优先使用g.img（现在可能是URL），否则使用占位图
+    const imgSrc = g.img && g.img.startsWith('http') ? g.img : `https://picsum.photos/260/180?random=${g._id}&sig=${Date.now()}`;
     
     return `
     <div class="gift-card">
@@ -282,7 +312,7 @@ function renderList() {
   }).join("");
 }
 
-// 领取功能 ============================================
+// 领取功能
 function openGet(id) {
   currentGiftId = id;
   $("nickname").value = "";
@@ -305,14 +335,12 @@ $("confirmReceive").onclick = async () => {
     return;
   }
   
-  // 检查是否已领取
   if (gift.claimers && gift.claimers.includes(nickname)) {
     showTip("你已经领取过这个物品啦～");
     $("nickname").select();
     return;
   }
   
-  // 更新领取信息
   const newClaimers = [...(gift.claimers || []), nickname];
   const newClaimed = (gift.claimed || 0) + 1;
   
@@ -325,15 +353,14 @@ $("confirmReceive").onclick = async () => {
   if (res.code === 0) {
     showTip("领取成功 ✨");
     $("receiveModal").classList.remove("show");
-    loadList(); // 重新加载列表
+    loadList();
   } else {
     showTip(`领取失败: ${res.msg}`);
   }
 };
 
-// 添加物品功能 ========================================
+// 添加物品功能
 $("addGift").onclick = async () => {
-  // 验证表单
   const name = $("giftName").value.trim();
   const stock = parseInt($("giftStock").value);
   const desc = $("giftDesc").value.trim();
@@ -356,12 +383,12 @@ $("addGift").onclick = async () => {
     return;
   }
   
-  // 构建物品数据
+  // 构建物品数据 - 关键：img字段存储URL
   const giftData = {
     name, 
     stock, 
     desc,
-    img: imgBase64 || "",
+    img: uploadedImageUrl || "", // 存储URL，不是Base64
     claimers: [], 
     claimed: 0
   };
@@ -370,20 +397,18 @@ $("addGift").onclick = async () => {
   
   if (res.code === 0) {
     showTip("物品添加成功 ✨");
-    // 清空表单
     $("giftName").value = "";
     $("giftStock").value = 1;
     $("giftDesc").value = "";
     $("uploadImg").value = "";
-    imgBase64 = "";
-    // 重新加载列表
+    uploadedImageUrl = "";
     loadList();
   } else {
     showTip(`添加失败: ${res.msg}`);
   }
 };
 
-// 管理员功能 ==========================================
+// 管理员功能
 let adminCount = 0;
 $("adminBtn").onclick = () => {
   adminCount++;
@@ -405,10 +430,9 @@ window.onclick = (e) => {
   }
 };
 
-// 页面初始化 ==========================================
+// 页面初始化
 (async () => {
   try {
-    // 欢迎信处理
     if (localStorage.getItem("hasReadLetter")) {
       $("letterBox").style.display = "none";
     }
@@ -419,7 +443,6 @@ window.onclick = (e) => {
       $("editLetter").value = savedLetter;
     }
     
-    // 加载物品列表
     await loadList();
     showTip("欢迎来到“李”物领养站 ✨");
     
