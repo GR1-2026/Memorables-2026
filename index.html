@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>回忆礼物领养站 - 权限修复测试版</title>
+<title>回忆礼物领养站 - API调试版</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{padding:20px;background:#f7f3ee;font-family:Arial;max-width:800px;margin:0 auto;}
@@ -19,90 +19,66 @@ button:hover{background:#7a402d;}
 #giftList{margin-top:20px;}
 .item{background:#fff;padding:15px;border-radius:8px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
 .loading{text-align:center;padding:20px;color:#666;}
-.status-info{background:#e8f5e8;padding:15px;border-radius:8px;margin:20px 0;border-left:4px solid #4CAF50;}
-.debug-info{background:#f5f5f5;padding:10px;margin:10px 0;border-radius:4px;font-size:12px;color:#666;}
+.api-test{background:#e3f2fd;padding:15px;border-radius:8px;margin:20px 0;}
 </style>
 </head>
 <body>
 <h1>回忆礼物领养站 🧡</h1>
 
-<div class="status-info">
-  <h3>✅ 云函数权限已配置</h3>
-  <p><strong>权限状态：</strong>已设置为允许未登录用户访问</p>
-  <p><strong>当前配置：</strong><code>{ "*": { "invoke": true } }</code></p>
-  <p><strong>HTTP触发器：</strong>https://gr1-3gwaj6dyccc835f1-1412377543.ap-shanghai.app.tcloudbase.com/gift</p>
-</div>
-
-<!-- 测试面板 -->
-<div class="box">
-  <h3>云函数测试</h3>
-  <div class="debug-info">
-    <p>这个版本使用 <strong>直接HTTP调用</strong> 方式，不依赖云开发SDK。</p>
-    <p>测试前请确保：</p>
-    <ol>
-      <li>云函数权限已配置为允许未登录用户访问</li>
-      <li>HTTP触发器已配置完成</li>
-      <li>云函数代码已部署</li>
-    </ol>
-  </div>
+<div class="api-test">
+  <h3>API接口调试</h3>
+  <p><strong>问题：</strong>云函数返回"未知API"，说明我们的API名称不正确</p>
+  <p><strong>解决方法：</strong>我们需要找到云函数支持的正确的API名称</p>
   
-  <div style="display:flex;gap:10px;margin-bottom:15px;">
-    <button id="testListBtn" style="flex:1;background:#2196F3;">测试列表接口</button>
-    <button id="testAddBtn" style="flex:1;background:#4CAF50;">测试添加接口</button>
+  <div style="margin:15px 0;">
+    <label>尝试不同的API名称：</label>
+    <select id="apiName" style="width:100%;padding:10px;margin:10px 0;">
+      <option value="add">add</option>
+      <option value="create">create</option>
+      <option value="insert">insert</option>
+      <option value="new">new</option>
+      <option value="save">save</option>
+      <option value="list">list</option>
+      <option value="query">query</option>
+      <option value="get">get</option>
+      <option value="fetch">fetch</option>
+      <option value="find">find</option>
+    </select>
+    <button id="testApiBtn">测试此API</button>
   </div>
 </div>
 
-<!-- 添加物品面板 -->
 <div class="box">
-  <h3>添加物品</h3>
+  <h3>添加物品测试</h3>
   <label>物品名称</label>
   <input type="text" id="name" placeholder="输入名称" value="测试物品">
   
   <label>物品描述</label>
   <textarea id="desc" placeholder="输入描述">测试描述</textarea>
   
-  <button id="addBtn">添加物品</button>
+  <label>API名称（根据上面测试结果修改）</label>
+  <input type="text" id="customApiName" value="add" placeholder="输入正确的API名称">
+  
+  <button id="addBtn">使用自定义API名称添加</button>
 </div>
 
-<!-- 提示框 -->
 <div id="tip" class="tip"></div>
 
-<!-- 调用日志 -->
 <div class="box">
-  <h3>调用日志</h3>
-  <div id="callLogs" class="debug-info" style="max-height:200px;overflow-y:auto;">
-    等待调用...
+  <h3>调试信息</h3>
+  <div id="debugInfo" style="background:#f5f5f5;padding:10px;border-radius:4px;max-height:300px;overflow-y:auto;font-size:12px;">
+    等待测试...
   </div>
 </div>
 
-<!-- 物品列表 -->
-<div id="giftList" class="loading">点击"测试列表接口"加载数据</div>
+<div id="giftList" class="loading">点击"测试此API"开始调试</div>
 
 <script>
 // 配置
 const HTTP_TRIGGER_URL = "https://gr1-3gwaj6dyccc835f1-1412377543.ap-shanghai.app.tcloudbase.com/gift";
 
-// 日志管理
-function addLog(message, type = 'info') {
-  const logsEl = document.getElementById('callLogs');
-  const timestamp = new Date().toLocaleTimeString();
-  const logEntry = document.createElement('div');
-  logEntry.style.padding = '5px';
-  logEntry.style.margin = '2px 0';
-  logEntry.style.borderLeft = type === 'success' ? '3px solid #4CAF50' : 
-                             type === 'error' ? '3px solid #f44336' : '3px solid #2196F3';
-  logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
-  logsEl.prepend(logEntry);
-  
-  // 保持日志数量
-  if (logsEl.children.length > 20) {
-    logsEl.removeChild(logsEl.lastChild);
-  }
-}
-
 // 显示提示
 function showTip(msg, isSuccess) {
-  addLog(`提示: ${msg}`, isSuccess ? 'success' : 'error');
   const tipEl = document.getElementById('tip');
   tipEl.innerText = msg;
   tipEl.className = isSuccess ? 'tip success' : 'tip error';
@@ -111,10 +87,26 @@ function showTip(msg, isSuccess) {
   }, 3000);
 }
 
-// 调用云函数
+// 添加调试信息
+function addDebugInfo(message) {
+  const debugEl = document.getElementById('debugInfo');
+  const timestamp = new Date().toLocaleTimeString();
+  const logEntry = document.createElement('div');
+  logEntry.style.padding = '5px 0';
+  logEntry.style.borderBottom = '1px solid #eee';
+  logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
+  debugEl.prepend(logEntry);
+  
+  // 保持最多20条日志
+  if (debugEl.children.length > 20) {
+    debugEl.removeChild(debugEl.lastChild);
+  }
+}
+
+// 通用API调用函数
 async function callGiftAPI(data) {
-  addLog(`调用云函数: ${JSON.stringify(data)}`, 'info');
-  console.log("调用云函数，数据:", data, "URL:", HTTP_TRIGGER_URL);
+  addDebugInfo(`发送请求: ${JSON.stringify(data)}`);
+  console.log("调用云函数，数据:", data);
   
   try {
     const response = await fetch(HTTP_TRIGGER_URL, {
@@ -125,67 +117,88 @@ async function callGiftAPI(data) {
       body: JSON.stringify(data)
     });
     
-    console.log("HTTP响应状态:", response.status, response.statusText);
-    addLog(`HTTP响应: ${response.status} ${response.statusText}`, 'info');
+    addDebugInfo(`响应状态: ${response.status} ${response.statusText}`);
     
     if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`HTTP错误! 状态: ${response.status} ${response.statusText}, 响应: ${errorText}`);
+      throw new Error(`HTTP错误! 状态: ${response.status}`);
     }
     
     const result = await response.json();
-    console.log("HTTP响应数据:", result);
-    addLog(`返回结果: ${JSON.stringify(result).substring(0, 200)}`, 'success');
+    addDebugInfo(`返回结果: ${JSON.stringify(result)}`);
     return result;
     
   } catch (error) {
-    console.error("调用失败:", error);
-    addLog(`调用失败: ${error.message}`, 'error');
+    addDebugInfo(`调用失败: ${error.message}`);
     throw error;
   }
 }
 
-// 测试列表接口
-async function testListAPI() {
-  showTip("正在测试列表接口...", true);
-  
-  try {
-    const result = await callGiftAPI({ api: 'list' });
-    
-    if (result && result.code === 0) {
-      showTip(`列表接口测试成功！返回 ${result.data.length} 条数据`, true);
-      displayGiftList(result.data);
-    } else {
-      showTip(`列表接口返回错误: ${result?.msg || '未知错误'}`, false);
-    }
-  } catch (error) {
-    showTip(`列表接口测试失败: ${error.message}`, false);
-  }
-}
-
-// 测试添加接口
-async function testAddAPI() {
-  showTip("正在测试添加接口...", true);
-  
-  try {
-    const result = await callGiftAPI({
-      api: 'add',
+// 测试特定的API名称
+async function testAPIName(apiName, isList = false) {
+  const testData = isList ? 
+    { api: apiName } : 
+    {
+      api: apiName,
       name: '测试物品_' + Date.now(),
-      desc: '这是一个自动生成的测试物品',
+      desc: 'API测试物品',
       stock: 1,
       claimers: [],
       claimed: 0
-    });
+    };
+  
+  showTip(`正在测试 API: ${apiName}...`, true);
+  
+  try {
+    const result = await callGiftAPI(testData);
     
-    if (result && result.code === 0) {
-      showTip(`添加接口测试成功！物品ID: ${result.data._id}`, true);
-      // 测试成功后自动刷新列表
-      setTimeout(testListAPI, 1000);
+    if (result.code === 0) {
+      showTip(`✅ API "${apiName}" 测试成功！`, true);
+      addDebugInfo(`✅ API "${apiName}" 可用！`);
+      
+      // 如果是列表API，显示数据
+      if (isList && result.data) {
+        displayGiftList(result.data);
+      }
+      
+      return { success: true, data: result.data };
     } else {
-      showTip(`添加接口返回错误: ${result?.msg || '未知错误'}`, false);
+      showTip(`❌ API "${apiName}" 返回错误: ${result.msg}`, false);
+      addDebugInfo(`❌ API "${apiName}" 错误: ${result.msg}`);
+      return { success: false, error: result.msg };
     }
   } catch (error) {
-    showTip(`添加接口测试失败: ${error.message}`, false);
+    showTip(`❌ API "${apiName}" 调用失败: ${error.message}`, false);
+    addDebugInfo(`❌ API "${apiName}" 异常: ${error.message}`);
+    return { success: false, error: error.message };
+  }
+}
+
+// 批量测试所有可能的API名称
+async function testAllAPIs() {
+  const apis = ['add', 'create', 'insert', 'new', 'save', 'list', 'query', 'get', 'fetch', 'find'];
+  const results = {};
+  
+  addDebugInfo("开始批量测试API...");
+  
+  for (let i = 0; i < apis.length; i++) {
+    const api = apis[i];
+    addDebugInfo(`测试 ${i+1}/${apis.length}: ${api}`);
+    
+    const isList = ['list', 'query', 'get', 'fetch', 'find'].includes(api);
+    const result = await testAPIName(api, isList);
+    results[api] = result;
+    
+    // 稍微延迟，避免请求过快
+    await new Promise(resolve => setTimeout(resolve, 500));
+  }
+  
+  // 显示测试结果总结
+  addDebugInfo("=== API测试结果总结 ===");
+  const workingAPIs = Object.keys(results).filter(api => results[api].success);
+  if (workingAPIs.length > 0) {
+    addDebugInfo(`✅ 可用的API: ${workingAPIs.join(', ')}`);
+  } else {
+    addDebugInfo("❌ 没有找到可用的API");
   }
 }
 
@@ -193,17 +206,23 @@ async function testAddAPI() {
 async function addGift() {
   const giftName = document.getElementById('name').value.trim();
   const giftDesc = document.getElementById('desc').value.trim();
+  const apiName = document.getElementById('customApiName').value.trim();
   
   if (!giftName) {
     showTip("请填写物品名称", false);
     return;
   }
   
-  showTip("正在添加物品...", true);
+  if (!apiName) {
+    showTip("请填写API名称", false);
+    return;
+  }
+  
+  showTip(`正在使用 API "${apiName}" 添加物品...`, true);
   
   try {
     const result = await callGiftAPI({
-      api: 'add',
+      api: apiName,
       name: giftName,
       desc: giftDesc,
       stock: 1,
@@ -211,14 +230,18 @@ async function addGift() {
       claimed: 0
     });
     
-    if (result && result.code === 0) {
-      showTip(`添加成功！物品ID: ${result.data._id}`, true);
+    if (result.code === 0) {
+      showTip(`添加成功！物品ID: ${result.data?._id || '未知'}`, true);
       document.getElementById('name').value = '';
       document.getElementById('desc').value = '';
-      // 添加成功后刷新列表
-      setTimeout(testListAPI, 1000);
+      
+      // 添加成功后尝试刷新列表
+      const listResult = await callGiftAPI({ api: 'list' });
+      if (listResult.code === 0) {
+        displayGiftList(listResult.data);
+      }
     } else {
-      showTip(`添加失败: ${result?.msg || '云函数返回错误'}`, false);
+      showTip(`添加失败: ${result.msg}`, false);
     }
   } catch (error) {
     showTip(`添加失败: ${error.message}`, false);
@@ -230,42 +253,54 @@ function displayGiftList(gifts) {
   const listEl = document.getElementById('giftList');
   
   if (!gifts || gifts.length === 0) {
-    listEl.innerHTML = '<div class="item">暂无物品，点击添加第一个～</div>';
+    listEl.innerHTML = '<div class="item">暂无物品</div>';
     return;
   }
   
   listEl.innerHTML = gifts.map(gift => `
     <div class='item'>
-      <h4>${gift.name}</h4>
-      <p>${gift.desc}</p>
-      <p>ID: ${gift._id}</p>
-      <p>库存: ${gift.stock} | 已领取: ${gift.claimed} | 剩余: ${gift.stock - gift.claimed}</p>
-      <small style="color:#666;">创建时间: ${new Date(gift.createTime).toLocaleString()}</small>
+      <h4>${gift.name || '未命名'}</h4>
+      <p>${gift.desc || '无描述'}</p>
+      <p>ID: ${gift._id || '无ID'}</p>
+      <p>库存: ${gift.stock || 0} | 已领取: ${gift.claimed || 0}</p>
     </div>
   `).join('');
 }
 
 // 初始化页面
 document.addEventListener('DOMContentLoaded', function() {
-  console.log("页面加载完成，开始初始化...");
-  addLog("页面初始化完成，等待操作...", 'info');
+  addDebugInfo("页面初始化完成");
+  addDebugInfo(`目标URL: ${HTTP_TRIGGER_URL}`);
   
-  // 绑定按钮事件
-  document.getElementById('testListBtn').addEventListener('click', testListAPI);
-  document.getElementById('testAddBtn').addEventListener('click', testAddAPI);
+  // 绑定事件
+  document.getElementById('testApiBtn').addEventListener('click', function() {
+    const apiName = document.getElementById('apiName').value;
+    const isList = ['list', 'query', 'get', 'fetch', 'find'].includes(apiName);
+    testAPIName(apiName, isList);
+  });
+  
   document.getElementById('addBtn').addEventListener('click', addGift);
   
-  // 自动测试连接
+  // 添加批量测试按钮
+  const batchTestBtn = document.createElement('button');
+  batchTestBtn.textContent = '批量测试所有API';
+  batchTestBtn.style.background = '#9C27B0';
+  batchTestBtn.style.marginTop = '10px';
+  batchTestBtn.addEventListener('click', testAllAPIs);
+  document.querySelector('.api-test').appendChild(batchTestBtn);
+  
+  // 自动测试list API
   setTimeout(() => {
-    addLog("准备就绪，可以开始测试！", 'success');
+    addDebugInfo("自动测试list API...");
+    testAPIName('list', true);
   }, 1000);
 });
 
-// 添加一个快速测试功能到控制台
-window.testGiftAPI = async function(api, data) {
-  const payload = { api, ...data };
-  console.log("调用测试:", payload);
-  return await callGiftAPI(payload);
+// 在控制台添加测试函数
+window.debugGiftAPI = {
+  call: callGiftAPI,
+  test: testAPIName,
+  testAll: testAllAPIs
 };
 </script>
 </body>
