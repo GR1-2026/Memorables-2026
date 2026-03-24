@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>回忆礼物领养站 - API调试版</title>
+<title>回忆礼物领养站 - 最终版</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 body{padding:20px;background:#f7f3ee;font-family:Arial;max-width:800px;margin:0 auto;}
@@ -17,61 +17,38 @@ button:hover{background:#7a402d;}
 .success{background:#d4edda;color:#155724;display:block;}
 .error{background:#f8d7da;color:#721c24;display:block;}
 #giftList{margin-top:20px;}
-.item{background:#fff;padding:15px;border-radius:8px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);}
+.item{background:#fff;padding:15px;border-radius:8px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.1);position:relative;}
+.claim-btn{background:#2196F3;color:white;border:none;padding:5px 10px;border-radius:4px;cursor:pointer;margin-top:5px;}
 .loading{text-align:center;padding:20px;color:#666;}
-.api-test{background:#e3f2fd;padding:15px;border-radius:8px;margin:20px 0;}
 </style>
 </head>
 <body>
 <h1>回忆礼物领养站 🧡</h1>
 
-<div class="api-test">
-  <h3>API接口调试</h3>
-  <p><strong>问题：</strong>云函数返回"未知API"，说明我们的API名称不正确</p>
-  <p><strong>解决方法：</strong>我们需要找到云函数支持的正确的API名称</p>
-  
-  <div style="margin:15px 0;">
-    <label>尝试不同的API名称：</label>
-    <select id="apiName" style="width:100%;padding:10px;margin:10px 0;">
-      <option value="add">add</option>
-      <option value="create">create</option>
-      <option value="insert">insert</option>
-      <option value="new">new</option>
-      <option value="save">save</option>
-      <option value="list">list</option>
-      <option value="query">query</option>
-      <option value="get">get</option>
-      <option value="fetch">fetch</option>
-      <option value="find">find</option>
-    </select>
-    <button id="testApiBtn">测试此API</button>
-  </div>
+<div class="box">
+  <h3>✅ 系统就绪 - 云函数代码已确认</h3>
+  <p><strong>支持的API：</strong>list, add, update</p>
+  <p><strong>调用地址：</strong>https://gr1-3gwaj6dyccc835f1-1412377543.ap-shanghai.app.tcloudbase.com/gift</p>
+  <p><strong>集合名称：</strong>gifts</p>
 </div>
 
+<!-- 添加物品面板 -->
 <div class="box">
-  <h3>添加物品测试</h3>
+  <h3>添加物品</h3>
   <label>物品名称</label>
   <input type="text" id="name" placeholder="输入名称" value="测试物品">
   
   <label>物品描述</label>
   <textarea id="desc" placeholder="输入描述">测试描述</textarea>
   
-  <label>API名称（根据上面测试结果修改）</label>
-  <input type="text" id="customApiName" value="add" placeholder="输入正确的API名称">
-  
-  <button id="addBtn">使用自定义API名称添加</button>
+  <button id="addBtn">添加物品</button>
+  <button id="refreshBtn" style="background:#2196F3; margin-top:10px;">刷新列表</button>
 </div>
 
 <div id="tip" class="tip"></div>
 
-<div class="box">
-  <h3>调试信息</h3>
-  <div id="debugInfo" style="background:#f5f5f5;padding:10px;border-radius:4px;max-height:300px;overflow-y:auto;font-size:12px;">
-    等待测试...
-  </div>
-</div>
-
-<div id="giftList" class="loading">点击"测试此API"开始调试</div>
+<!-- 物品列表 -->
+<div id="giftList" class="loading">正在加载物品列表...</div>
 
 <script>
 // 配置
@@ -87,26 +64,9 @@ function showTip(msg, isSuccess) {
   }, 3000);
 }
 
-// 添加调试信息
-function addDebugInfo(message) {
-  const debugEl = document.getElementById('debugInfo');
-  const timestamp = new Date().toLocaleTimeString();
-  const logEntry = document.createElement('div');
-  logEntry.style.padding = '5px 0';
-  logEntry.style.borderBottom = '1px solid #eee';
-  logEntry.innerHTML = `<strong>[${timestamp}]</strong> ${message}`;
-  debugEl.prepend(logEntry);
-  
-  // 保持最多20条日志
-  if (debugEl.children.length > 20) {
-    debugEl.removeChild(debugEl.lastChild);
-  }
-}
-
-// 通用API调用函数
+// 调用云函数API
 async function callGiftAPI(data) {
-  addDebugInfo(`发送请求: ${JSON.stringify(data)}`);
-  console.log("调用云函数，数据:", data);
+  console.log("调用云函数:", data);
   
   try {
     const response = await fetch(HTTP_TRIGGER_URL, {
@@ -117,88 +77,59 @@ async function callGiftAPI(data) {
       body: JSON.stringify(data)
     });
     
-    addDebugInfo(`响应状态: ${response.status} ${response.statusText}`);
-    
     if (!response.ok) {
-      throw new Error(`HTTP错误! 状态: ${response.status}`);
+      throw new Error(`HTTP错误! 状态: ${response.status} ${response.statusText}`);
     }
     
     const result = await response.json();
-    addDebugInfo(`返回结果: ${JSON.stringify(result)}`);
+    console.log("云函数响应:", result);
+    
     return result;
     
   } catch (error) {
-    addDebugInfo(`调用失败: ${error.message}`);
+    console.error("API调用失败:", error);
     throw error;
   }
 }
 
-// 测试特定的API名称
-async function testAPIName(apiName, isList = false) {
-  const testData = isList ? 
-    { api: apiName } : 
-    {
-      api: apiName,
-      name: '测试物品_' + Date.now(),
-      desc: 'API测试物品',
-      stock: 1,
-      claimers: [],
-      claimed: 0
-    };
-  
-  showTip(`正在测试 API: ${apiName}...`, true);
-  
+// 加载物品列表
+async function loadGiftList() {
   try {
-    const result = await callGiftAPI(testData);
+    const result = await callGiftAPI({ api: 'list' });
+    console.log("列表结果:", result);
+    
+    const listEl = document.getElementById('giftList');
     
     if (result.code === 0) {
-      showTip(`✅ API "${apiName}" 测试成功！`, true);
-      addDebugInfo(`✅ API "${apiName}" 可用！`);
-      
-      // 如果是列表API，显示数据
-      if (isList && result.data) {
-        displayGiftList(result.data);
+      if (result.data && result.data.length > 0) {
+        listEl.innerHTML = result.data.map(gift => `
+          <div class='item' id="gift-${gift._id}">
+            <h4>${gift.name}</h4>
+            <p>${gift.desc || '无描述'}</p>
+            <p>库存: ${gift.stock} | 已领取: ${gift.claimed} | 剩余: ${gift.stock - gift.claimed}</p>
+            <p><small>ID: ${gift._id}</small></p>
+            
+            ${gift.claimed < gift.stock ? `
+              <button class="claim-btn" onclick="claimItem('${gift._id}')">领取此物品</button>
+            ` : `
+              <p style="color:#f44336;">已领完</p>
+            `}
+            
+            <div style="margin-top:10px;">
+              <small>领取人: ${gift.claimers && gift.claimers.length > 0 ? gift.claimers.join(', ') : '暂无'}</small>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        listEl.innerHTML = '<div class="item">暂无物品，点击添加第一个～</div>';
       }
-      
-      return { success: true, data: result.data };
     } else {
-      showTip(`❌ API "${apiName}" 返回错误: ${result.msg}`, false);
-      addDebugInfo(`❌ API "${apiName}" 错误: ${result.msg}`);
-      return { success: false, error: result.msg };
+      listEl.innerHTML = `<div class="item">加载失败: ${result.msg}</div>`;
+      showTip('加载失败: ' + result.msg, false);
     }
   } catch (error) {
-    showTip(`❌ API "${apiName}" 调用失败: ${error.message}`, false);
-    addDebugInfo(`❌ API "${apiName}" 异常: ${error.message}`);
-    return { success: false, error: error.message };
-  }
-}
-
-// 批量测试所有可能的API名称
-async function testAllAPIs() {
-  const apis = ['add', 'create', 'insert', 'new', 'save', 'list', 'query', 'get', 'fetch', 'find'];
-  const results = {};
-  
-  addDebugInfo("开始批量测试API...");
-  
-  for (let i = 0; i < apis.length; i++) {
-    const api = apis[i];
-    addDebugInfo(`测试 ${i+1}/${apis.length}: ${api}`);
-    
-    const isList = ['list', 'query', 'get', 'fetch', 'find'].includes(api);
-    const result = await testAPIName(api, isList);
-    results[api] = result;
-    
-    // 稍微延迟，避免请求过快
-    await new Promise(resolve => setTimeout(resolve, 500));
-  }
-  
-  // 显示测试结果总结
-  addDebugInfo("=== API测试结果总结 ===");
-  const workingAPIs = Object.keys(results).filter(api => results[api].success);
-  if (workingAPIs.length > 0) {
-    addDebugInfo(`✅ 可用的API: ${workingAPIs.join(', ')}`);
-  } else {
-    addDebugInfo("❌ 没有找到可用的API");
+    document.getElementById('giftList').innerHTML = `<div class="item">加载失败: ${error.message}</div>`;
+    showTip('加载失败: ' + error.message, false);
   }
 }
 
@@ -206,40 +137,28 @@ async function testAllAPIs() {
 async function addGift() {
   const giftName = document.getElementById('name').value.trim();
   const giftDesc = document.getElementById('desc').value.trim();
-  const apiName = document.getElementById('customApiName').value.trim();
   
   if (!giftName) {
     showTip("请填写物品名称", false);
     return;
   }
   
-  if (!apiName) {
-    showTip("请填写API名称", false);
-    return;
-  }
-  
-  showTip(`正在使用 API "${apiName}" 添加物品...`, true);
+  showTip("正在添加物品...", true);
   
   try {
     const result = await callGiftAPI({
-      api: apiName,
+      api: 'add',
       name: giftName,
-      desc: giftDesc,
-      stock: 1,
-      claimers: [],
-      claimed: 0
+      desc: giftDesc
     });
     
+    console.log("添加结果:", result);
+    
     if (result.code === 0) {
-      showTip(`添加成功！物品ID: ${result.data?._id || '未知'}`, true);
+      showTip(`添加成功！物品ID: ${result.data._id}`, true);
       document.getElementById('name').value = '';
       document.getElementById('desc').value = '';
-      
-      // 添加成功后尝试刷新列表
-      const listResult = await callGiftAPI({ api: 'list' });
-      if (listResult.code === 0) {
-        displayGiftList(listResult.data);
-      }
+      loadGiftList(); // 刷新列表
     } else {
       showTip(`添加失败: ${result.msg}`, false);
     }
@@ -248,59 +167,83 @@ async function addGift() {
   }
 }
 
-// 显示物品列表
-function displayGiftList(gifts) {
-  const listEl = document.getElementById('giftList');
+// 领取物品
+async function claimItem(giftId) {
+  const userName = prompt("请输入您的姓名（领取人）:");
+  if (!userName) return;
   
-  if (!gifts || gifts.length === 0) {
-    listEl.innerHTML = '<div class="item">暂无物品</div>';
-    return;
+  // 先获取当前物品信息
+  try {
+    const listResult = await callGiftAPI({ api: 'list' });
+    
+    if (listResult.code !== 0) {
+      showTip("获取物品列表失败: " + listResult.msg, false);
+      return;
+    }
+    
+    const gift = listResult.data.find(g => g._id === giftId);
+    
+    if (!gift) {
+      showTip("物品不存在", false);
+      return;
+    }
+    
+    if (gift.claimed >= gift.stock) {
+      showTip("此物品已领完", false);
+      return;
+    }
+    
+    // 检查是否已经领取过
+    if (gift.claimers && gift.claimers.includes(userName)) {
+      showTip("您已经领取过此物品了", false);
+      return;
+    }
+    
+    showTip("正在领取...", true);
+    
+    // 更新物品信息
+    const newClaimers = [...(gift.claimers || []), userName];
+    const newClaimed = gift.claimed + 1;
+    
+    const updateResult = await callGiftAPI({
+      api: 'update',
+      id: giftId,
+      claimers: newClaimers,
+      claimed: newClaimed
+    });
+    
+    console.log("更新结果:", updateResult);
+    
+    if (updateResult.code === 0) {
+      showTip(`领取成功！感谢 ${userName}`, true);
+      loadGiftList(); // 刷新列表
+    } else {
+      showTip(`领取失败: ${updateResult.msg}`, false);
+    }
+  } catch (error) {
+    showTip(`领取失败: ${error.message}`, false);
   }
-  
-  listEl.innerHTML = gifts.map(gift => `
-    <div class='item'>
-      <h4>${gift.name || '未命名'}</h4>
-      <p>${gift.desc || '无描述'}</p>
-      <p>ID: ${gift._id || '无ID'}</p>
-      <p>库存: ${gift.stock || 0} | 已领取: ${gift.claimed || 0}</p>
-    </div>
-  `).join('');
 }
 
-// 初始化页面
+// 页面初始化
 document.addEventListener('DOMContentLoaded', function() {
-  addDebugInfo("页面初始化完成");
-  addDebugInfo(`目标URL: ${HTTP_TRIGGER_URL}`);
+  console.log("页面初始化完成");
   
-  // 绑定事件
-  document.getElementById('testApiBtn').addEventListener('click', function() {
-    const apiName = document.getElementById('apiName').value;
-    const isList = ['list', 'query', 'get', 'fetch', 'find'].includes(apiName);
-    testAPIName(apiName, isList);
-  });
-  
+  // 绑定按钮事件
   document.getElementById('addBtn').addEventListener('click', addGift);
+  document.getElementById('refreshBtn').addEventListener('click', loadGiftList);
   
-  // 添加批量测试按钮
-  const batchTestBtn = document.createElement('button');
-  batchTestBtn.textContent = '批量测试所有API';
-  batchTestBtn.style.background = '#9C27B0';
-  batchTestBtn.style.marginTop = '10px';
-  batchTestBtn.addEventListener('click', testAllAPIs);
-  document.querySelector('.api-test').appendChild(batchTestBtn);
-  
-  // 自动测试list API
+  // 初始加载列表
   setTimeout(() => {
-    addDebugInfo("自动测试list API...");
-    testAPIName('list', true);
-  }, 1000);
+    loadGiftList();
+  }, 500);
 });
 
-// 在控制台添加测试函数
-window.debugGiftAPI = {
-  call: callGiftAPI,
-  test: testAPIName,
-  testAll: testAllAPIs
+// 添加一个控制台测试函数
+window.testAPI = async function(api, data) {
+  const payload = { api, ...data };
+  console.log("测试调用:", payload);
+  return await callGiftAPI(payload);
 };
 </script>
 </body>
