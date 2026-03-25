@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>李物领养站 🧡</title>
+<title>“李”物领养站 🧡</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
 body{background:#f7f3ee;color:#333;padding:16px;max-width:1000px;margin:0 auto}
@@ -14,7 +14,9 @@ body{background:#f7f3ee;color:#333;padding:16px;max-width:1000px;margin:0 auto}
 .letter-content{line-height:1.7;font-size:15px;color:#444;margin-bottom:16px}
 .letter-sign{text-align:right;font-size:14px;color:#8B4B35}
 .nav{display:flex;justify-content:space-between;align-items:center;margin:20px 0}
-.title{font-size:20px;color:#8B4B35}
+.title-section{flex:1}
+.title{font-size:20px;color:#8B4B35;margin-bottom:4px}
+.subtitle{font-size:14px;color:#8B4B35;opacity:0.7;line-height:1.4}
 .admin-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#f3f3f3;border:none;cursor:pointer}
 .admin-panel{background:#fff;border-radius:12px;padding:20px;margin-bottom:24px;display:none}
 .admin-panel.show{display:block}
@@ -23,16 +25,20 @@ body{background:#f7f3ee;color:#333;padding:16px;max-width:1000px;margin:0 auto}
 input,textarea{width:100%;border:1px solid #e0e0e0;border-radius:8px;padding:12px;font-size:14px;margin-bottom:8px}
 button.btn{width:100%;background:#8B4B35;color:white;border:none;border-radius:8px;padding:14px;font-size:15px;cursor:pointer}
 button.btn:active{background:#7a3b2f}
-.gift-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:16px}
+/* 【修改1】网格布局，始终显示两列 */
+.gift-grid{display:grid;grid-template-columns:repeat(2, 1fr);gap:12px}
+@media (max-width: 480px) {
+  .gift-grid{grid-template-columns:repeat(2, 1fr);gap:8px}
+}
 .gift-card{background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.05)}
-.gift-img{width:100%;height:180px;object-fit:cover;background:#f5f5f5}
-.gift-info{padding:16px}
-.gift-name{font-size:16px;margin-bottom:8px}
-.tag{font-size:12px;background:#f3efe9;color:#8B4B35;padding:4px 8px;border-radius:10px;display:inline-block;margin-bottom:10px}
-.desc{font-size:14px;line-height:1.5;margin-bottom:10px;color:#555}
-.owners{font-size:12px;color:#777;margin-bottom:12px;min-height:20px}
-.new-owner{font-size:12px;color:#8B4B35;margin-top:8px;font-style:italic;display:none}
-.receive-btn{width:100%;padding:10px;border-radius:8px;border:none;background:#8B4B35;color:white;cursor:pointer}
+.gift-img{width:100%;height:150px;object-fit:cover;background:#f5f5f5}
+.gift-info{padding:12px}
+.gift-name{font-size:15px;margin-bottom:6px;line-height:1.3}
+.tag{font-size:11px;background:#f3efe9;color:#8B4B35;padding:3px 6px;border-radius:8px;display:inline-block;margin-bottom:8px}
+.desc{font-size:13px;line-height:1.5;margin-bottom:8px;color:#555;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.owners{font-size:11px;color:#777;margin-bottom:8px;min-height:16px}
+.new-owner{font-size:11px;color:#8B4B35;margin-top:4px;font-style:italic}
+.receive-btn{width:100%;padding:8px;border-radius:6px;border:none;background:#8B4B35;color:white;cursor:pointer;font-size:13px}
 .receive-btn:disabled{background:#ccc}
 .modal{position:fixed;inset:0;background:rgba(0,0,0,0.4);display:none;align-items:center;justify-content:center;padding:20px;z-index:9}
 .modal.show{display:flex}
@@ -51,18 +57,26 @@ button.btn:active{background:#7a3b2f}
     <button class="letter-close" id="letterClose">×</button>
     <h2 class="letter-title">致我亲爱的朋友们</h2>
     <div class="letter-content" id="letterContent">
-当我准备踏上新的旅程，想把这些承载着我们共同回忆的小物件分享给你。
-每一件物品都藏着一段时光、一次欢笑，或是一个让我们温暖很久的瞬间。
+三年半时间或许不算特别长，
+但足够一棵苹果树树从种下到结果（这是真的，十月想吃新鲜苹果可以戳我！），
+也足够让一个人攒下很多很多有趣的经历，和很多很多的小玩意~
 
-这不是告别，只是换一种方式，把回忆留给你。
+当我准备踏上新的旅程，想把这些承载着回忆或者在某个时刻给我带来过快乐的小玩意分享给你。
 谢谢你来过，也谢谢你陪我走过。
+      
+（这封信只会显示一次）
+ *中插一个免责声明：如果出现了您送给我的某次礼物，那只是因为我真的真的扛不动了
     </div>
-    <div class="letter-sign">—— 你的朋友</div>
+    <div class="letter-sign">—— 李宇晗</div>
   </div>
 </div>
 
 <div class="nav">
-  <div class="title">李物领养站 🧡</div>
+  <div class="title-section">
+    <div class="title">“李”物领养站 🧡</div>
+    <!-- 【修改3】添加副标题 -->
+    <div class="subtitle">回忆也需要交接~</div>
+  </div>
   <button class="admin-btn" id="adminBtn">⚙️</button>
 </div>
 
@@ -78,7 +92,7 @@ button.btn:active{background:#7a3b2f}
     <input type="number" id="giftStock" value="1" min="1" placeholder="可领取数量（至少1）">
     <textarea id="giftDesc" placeholder="比如：小学毕业同桌送的礼物"></textarea>
     
-    <!-- 修复后的图片上传 -->
+    <!-- 图片上传 -->
     <input type="file" id="uploadImg" accept="image/*">
     <div id="imagePreview" style="margin:10px 0;display:none;">
       <img id="previewImg" style="max-width:200px;border-radius:8px;">
@@ -357,7 +371,7 @@ function renderGiftList() {
     const left = (g.stock || 1) - (g.claimed || 0);
     const canGet = left > 0;
     const claimers = g.claimers || [];
-    const has = claimers.length > 0 ? claimers.join("、") : "暂无领取记录";
+    const has = claimers.length > 0 ? claimers.join("、") : "";
     const latestOwner = claimers.length > 0 ? claimers[claimers.length - 1] : null;
     
     // 图片显示逻辑
@@ -375,8 +389,8 @@ function renderGiftList() {
         <div class="gift-name">${g.name}</div>
         <span class="tag">剩余 ${left} 份</span>
         <div class="desc">${g.desc || '暂无描述'}</div>
-        <div class="owners">${has}</div>
-        ${latestOwner ? `<div class="new-owner" style="display:block;">最新主人：${latestOwner}</div>` : ''}
+        <!-- 【修改2】只保留最新主人信息，不显示"暂无领取记录" -->
+        ${latestOwner ? `<div class="new-owner">最新主人：${latestOwner}</div>` : ''}
         <button class="receive-btn" ${canGet ? '' : 'disabled'} onclick="openReceiveModal('${g._id}')">
           ${canGet ? '领取这份回忆' : '已领完'}
         </button>
