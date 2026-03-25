@@ -367,6 +367,51 @@ function renderGiftList() {
       </div>`;
     return;
   }
+  // 【新增】排序逻辑：未领取的置顶，已领完的置底
+  const sortedGifts = [...allGifts].sort((a, b) => {
+    // 计算剩余数量
+    const aLeft = (a.stock || 1) - (a.claimed || 0);
+    const bLeft = (b.stock || 1) - (b.claimed || 0);
+    
+    // 如果a可领取而b不可领取，a排在前面
+    if (aLeft > 0 && bLeft <= 0) return -1;
+    // 如果b可领取而a不可领取，b排在前面
+    if (bLeft > 0 && aLeft <= 0) return 1;
+    
+    // 如果两者状态相同（都可领取或都不可领取），保持原有顺序
+    return 0;
+  });
+  
+  container.innerHTML = sortedGifts.map(g => {
+    const left = (g.stock || 1) - (g.claimed || 0);
+    const canGet = left > 0;
+    const claimers = g.claimers || [];
+    const has = claimers.length > 0 ? claimers.join("、") : "";
+    const latestOwner = claimers.length > 0 ? claimers[claimers.length - 1] : null;
+    
+    // 图片显示逻辑
+    let imgHtml = '<div class="gift-img"></div>';
+    
+    if (g.img && g.img.trim().length > 0) {
+      imgHtml = `<img class="gift-img" src="${g.img}" alt="${g.name}" onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<div class=\\'gift-img\\'></div>';">`;
+    }
+    
+    return `
+    <div class="gift-card">
+      ${imgHtml}
+      <div class="gift-info">
+        <div class="gift-name">${g.name}</div>
+        <span class="tag">剩余 ${left} 份</span>
+        <div class="desc">${g.desc || '暂无描述'}</div>
+        ${latestOwner ? `<div class="new-owner">最新主人：${latestOwner}</div>` : ''}
+        <button class="receive-btn" ${canGet ? '' : 'disabled'} onclick="openReceiveModal('${g._id}')">
+          ${canGet ? '领取这份回忆' : '已领完'}
+        </button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
   
   container.innerHTML = allGifts.map(g => {
     const left = (g.stock || 1) - (g.claimed || 0);
